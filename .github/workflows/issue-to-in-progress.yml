@@ -1,0 +1,27 @@
+name: Issue to In Progress
+
+on:
+  issues:
+    types: [assigned]
+
+env:
+  in_progress: In progress
+
+jobs:
+  in_progess:
+    runs-on: ubuntu-latest
+    steps:
+      - name: move issue to ${{ env.in_progress }}
+        uses: leonsteinhaeuser/project-beta-automations@v2.1.0
+        with:
+          gh_token: ${{ secrets.TEST_SECRET }}
+          organization: TofuBytes-Studies-Group
+          project_id: 1
+          resource_node_id: ${{ github.event.issue.node_id }}
+          status_value: ${{ env.in_progress }} # Target status
+
+  
+               
+                
+
+
