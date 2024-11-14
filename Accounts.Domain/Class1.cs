@@ -1,4 +1,4 @@
-﻿namespace MTOGO.Domain
+﻿namespace Accounts.Domain
 {
     public class Class1
     {
