@@ -1,7 +1,7 @@
+using Accounts.API.Services;
 using Microsoft.AspNetCore.Mvc;
-using MTOGO.API.Services;
 
-namespace MTOGO.API.Controllers
+namespace Accounts.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]

@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 
-namespace MTOGO.API.Kafka
+namespace Accounts.API.Kafka
 {
     // Extend BackgroundService to run in the background for the lifetime of the application
     public class KafkaConsumer : BackgroundService

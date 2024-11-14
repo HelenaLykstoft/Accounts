@@ -5,15 +5,15 @@ VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F3024E9C-077F-4A78-9748-DDF1535296C4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTOGO.API", "MTOGO.API\MTOGO.API.csproj", "{24072846-C484-44E9-B955-60ED5BD88BE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.API", "Accounts.API\Accounts.API.csproj", "{24072846-C484-44E9-B955-60ED5BD88BE0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F0DA060A-3FD5-4690-B178-ABA36B861B14}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTOGO.UnitTests", "MTOGO.UnitTests\MTOGO.UnitTests.csproj", "{CA83922C-25C4-45AB-9233-6CAF253424AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.UnitTests", "Accounts.UnitTests\Accounts.UnitTests.csproj", "{CA83922C-25C4-45AB-9233-6CAF253424AA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTOGO.Domain", "MTOGO.Domain\MTOGO.Domain.csproj", "{2AC726C5-0A81-488E-BA60-41F971694013}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Domain", "Accounts.Domain\Accounts.Domain.csproj", "{2AC726C5-0A81-488E-BA60-41F971694013}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTOGO.Infrastructure", "MTOGO.Infrastructure\MTOGO.Infrastructure.csproj", "{AC76FC57-D38C-4952-AD32-C63FB3A1CA00}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Infrastructure", "Accounts.Infrastructure\Accounts.Infrastructure.csproj", "{AC76FC57-D38C-4952-AD32-C63FB3A1CA00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
