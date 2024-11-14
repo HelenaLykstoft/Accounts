@@ -24,6 +24,19 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
       - kafka-network
+  postgres:
+    image: postgres:16.1
+    env_file:
+      - .env
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./Database/database-script.sql:/docker-entrypoint-initdb.d/database-script.sql
 
 networks:
   kafka-network:
