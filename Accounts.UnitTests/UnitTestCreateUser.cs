@@ -1,8 +1,5 @@
 ﻿using Accounts.API.DTO;
 using Accounts.API.Services;
-using Accounts.Domain.Entities;
-using Accounts.UnitTests.Entities;
-using Xunit;
 
 namespace Accounts.UnitTests
 {
@@ -15,7 +12,7 @@ namespace Accounts.UnitTests
             _createUserValidation = new RegisterUserValidator();
         }
 
-        // 1. Username Validation
+        // Username Validation
         [Fact]
         public void Username_ShouldBeValid()
         {
@@ -40,7 +37,7 @@ namespace Accounts.UnitTests
             Assert.False(result.IsValid);
         }
 
-        // 2. Password Validation
+        // Password Validation
         [Fact]
         public void Password_ShouldBeValid()
         {
@@ -65,7 +62,7 @@ namespace Accounts.UnitTests
             Assert.False(result.IsValid);
         }
 
-        // 3. Email Validation
+        // Email Validation
         [Fact]
         public void Email_ShouldBeValid()
         {
@@ -92,7 +89,7 @@ namespace Accounts.UnitTests
             Assert.False(result.IsValid);
         }
 
-        // 4. Phone Number Validation
+        // Phone Number Validation
         [Fact]
         public void PhoneNumber_ShouldBeValid()
         {
@@ -117,7 +114,7 @@ namespace Accounts.UnitTests
             Assert.False(result.IsValid);
         }
 
-        // 5. Address Validation
+        // Address Validation
         [Fact]
         public void Address_ShouldBeValid()
         {
@@ -127,12 +124,11 @@ namespace Accounts.UnitTests
                         StreetName = "Main St",
                         PostalCode = 1000,
                         City = "Copenhagen",
-            };
+            }; // Valid address data
 
             var result = _createUserValidation.Validate(user);
             Assert.True(result.IsValid);
         }
-
         [Fact]
         public void Address_ShouldBeInvalid()
         {
@@ -142,7 +138,7 @@ namespace Accounts.UnitTests
                 StreetName = "Main St",
                 PostalCode = 980,
                 City = "Copenhagen",
-            };
+            }; // Invalid address data
 
             var result = _createUserValidation.Validate(user);
             Assert.False(result.IsValid);

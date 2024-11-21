@@ -9,7 +9,7 @@ namespace Accounts.API.DTO
         public string Username { get; set; }
         
         public string Password { get; set; }
-        public int UserTypeId { get; set; }  // References user_type table
+        public int UserTypeId { get; set; } 
 
         // Contact Information
         public string Email { get; set; }
@@ -18,7 +18,7 @@ namespace Accounts.API.DTO
         // Address Information
         public int StreetNumber { get; set; }
         public string StreetName { get; set; }
-        public int PostalCode { get; set; } // References city table
-        public string City { get; set; } // Name of the city for creation (in case the city is new)
+        public int PostalCode { get; set; } 
+        public string City { get; set; } 
     }
 }

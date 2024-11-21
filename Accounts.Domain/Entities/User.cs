@@ -7,14 +7,11 @@ public class User
     public string LastName { get; set; }
     public string Username { get; set; }
 
-    // Add foreign key for UserType (which you already have)
     public int UserTypeId { get; set; }
 
-    // Add foreign key for ContactInfo
-    public Guid ContactInfoId { get; set; } // Foreign Key to ContactInfo
+    public Guid ContactInfoId { get; set; } 
 
-    // Navigation properties
-    public ContactInfo ContactInfo { get; set; } // Navigation property (optional but recommended for EF)
-    public UserType UserType { get; set; } // Navigation property for UserType (optional)
+    public ContactInfo ContactInfo { get; set; } 
+    public UserType UserType { get; set; }
     
 }

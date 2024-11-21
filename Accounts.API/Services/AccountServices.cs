@@ -27,63 +27,64 @@ namespace Accounts.API.Services
                 throw new InvalidOperationException("Username is already taken.");
             }
             
-            // Step 1: Create or find the City
+            // Creates or finds the city
             var city = await _context.Cities.FirstOrDefaultAsync(c => c.PostalCode == dto.PostalCode);
             if (city == null)
             {
                 city = new City
                 {
                     PostalCode = dto.PostalCode,
-                    Name = dto.City // Assuming the city name is part of the DTO
+                    Name = dto.City
                 };
                 await _context.Cities.AddAsync(city);
                 await _context.SaveChangesAsync();
             }
 
-            // Step 2: Create the Address and link it to the city (assign the City object, not just PostalCode)
+            // Creates address and links to city
             var address = new Address
             {
                 Id = Guid.NewGuid(),
                 StreetNumber = dto.StreetNumber,
                 StreetName = dto.StreetName,
-                City = city // Assign the entire City entity here
+                City = city
             };
             await _context.Addresses.AddAsync(address);
             await _context.SaveChangesAsync();
 
-            // Step 3: Create the ContactInfo and link it to the address
+            // Creates the ContactInfo and link it to the address
             var contactInfo = new ContactInfo
             {
                 Id = Guid.NewGuid(),
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
-                AddressId = address.Id // Link contact info to the created address using AddressId
+                AddressId = address.Id 
             };
             await _context.ContactInfos.AddAsync(contactInfo);
             await _context.SaveChangesAsync();
 
-            // Step 4: Create the Login Information (hashed password)
-            var passwordHash = HashPassword(dto.Password); // Use a hashing function here
+            // Creates the Login Information (hashed password)
+            // Might needs changing compared to how we are gonna handle login
+            var passwordHash = HashPassword(dto.Password);
             var loginInfo = new LoginInformation
             {
                 Username = dto.Username,
-                Password = passwordHash // Store the hashed password
+                Password = passwordHash 
             };
             await _context.LoginInformations.AddAsync(loginInfo);
             await _context.SaveChangesAsync();
 
-            // Step 5: Create the User and link it to contact info and login info
+            // Creates the User and link it to contact info and login info
             var user = new User
             {
                 Id = Guid.NewGuid(),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 Username = dto.Username,
-                UserTypeId = dto.UserTypeId, // Link to UserType using the UserTypeId foreign key
-                ContactInfoId = contactInfo.Id, // Link user to the created contact info using ContactInfoId
+                UserTypeId = dto.UserTypeId, 
+                ContactInfoId = contactInfo.Id,
             };
 
-            // Optionally check for valid UserType
+            // Checks for valid UserType
             var userType = await _context.UserTypes.FirstOrDefaultAsync(ut => ut.Id == dto.UserTypeId);
             if (userType == null)
             {
@@ -93,14 +94,13 @@ namespace Accounts.API.Services
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            // Return the newly created User ID
+            // The return. Right now it returns the user id when a user is created.
             return user.Id;
         }
 
         private string HashPassword(string password)
         {
-            // Implement your password hashing logic here (e.g., SHA256, bcrypt)
-            return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password)); // Placeholder hashing
+            return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
         }
     }
 }

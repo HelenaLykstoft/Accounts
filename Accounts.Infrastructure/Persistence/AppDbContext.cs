@@ -3,12 +3,8 @@ using Accounts.Domain.Entities;
 
 namespace Accounts.Infrastructure.Persistence
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
-
         public DbSet<User> Users { get; set; }
         public DbSet<ContactInfo> ContactInfos { get; set; }
         public DbSet<Address> Addresses { get; set; }
@@ -18,7 +14,7 @@ namespace Accounts.Infrastructure.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Define table names
+            // Defines table names
             modelBuilder.Entity<User>().ToTable("app_user");
             modelBuilder.Entity<ContactInfo>().ToTable("contact_info");
             modelBuilder.Entity<Address>().ToTable("address");
@@ -26,7 +22,7 @@ namespace Accounts.Infrastructure.Persistence
             modelBuilder.Entity<LoginInformation>().ToTable("login_information");
             modelBuilder.Entity<UserType>().ToTable("user_type");
 
-            // Define primary keys
+            // Defines primary keys
             modelBuilder.Entity<User>().HasKey(u => u.Id);
             modelBuilder.Entity<ContactInfo>().HasKey(c => c.Id);
             modelBuilder.Entity<Address>().HasKey(a => a.Id);
@@ -92,7 +88,7 @@ namespace Accounts.Infrastructure.Persistence
             modelBuilder.Entity<LoginInformation>()
                 .Property(l => l.Password).HasColumnName("password");
 
-            // Define foreign key relationships
+            // Defines foreign key relationships
             modelBuilder.Entity<User>()
                 .HasOne(u => u.ContactInfo)
                 .WithMany()
@@ -100,8 +96,8 @@ namespace Accounts.Infrastructure.Persistence
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ContactInfo>()
-                .HasOne(ci => ci.Address) // ContactInfo has one Address
-                .WithMany(a => a.ContactInfos) // Address can have many ContactInfos
+                .HasOne(ci => ci.Address) 
+                .WithMany(a => a.ContactInfos) 
                 .HasForeignKey(ci => ci.AddressId);
 
             modelBuilder.Entity<Address>()
@@ -111,13 +107,12 @@ namespace Accounts.Infrastructure.Persistence
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
-                .HasOne(u => u.UserType) // A User has one UserType
-                .WithMany(ut => ut.Users) // A UserType has many Users
-                .HasForeignKey(u => u.UserTypeId) // The foreign key in the User entity
-                .OnDelete(DeleteBehavior.Restrict); // Optional: set delete behavior
+                .HasOne(u => u.UserType) 
+                .WithMany(ut => ut.Users)
+                .HasForeignKey(u => u.UserTypeId) 
+                .OnDelete(DeleteBehavior.Restrict); 
 
 
-            // Seeding default data
             modelBuilder.Entity<UserType>().HasData(
                 new UserType { Id = 1, Type = "user" },
                 new UserType { Id = 2, Type = "deliveryAgent" },
