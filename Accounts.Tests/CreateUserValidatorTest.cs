@@ -3,11 +3,11 @@ using Accounts.API.Services;
 
 namespace Accounts.UnitTests
 {
-    public class UnitTestCreateUser
+    public class CreateUserValidatorTest
     {
         private readonly RegisterUserValidator _createUserValidation;
 
-        public UnitTestCreateUser()
+        public CreateUserValidatorTest()
         {
             _createUserValidation = new RegisterUserValidator();
         }

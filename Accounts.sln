@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.API", "Accounts.AP
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F0DA060A-3FD5-4690-B178-ABA36B861B14}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.UnitTests", "Accounts.UnitTests\Accounts.UnitTests.csproj", "{CA83922C-25C4-45AB-9233-6CAF253424AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Tests", "Accounts.Tests\Accounts.Tests.csproj", "{CA83922C-25C4-45AB-9233-6CAF253424AA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Domain", "Accounts.Domain\Accounts.Domain.csproj", "{2AC726C5-0A81-488E-BA60-41F971694013}"
 EndProject

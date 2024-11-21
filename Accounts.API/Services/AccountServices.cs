@@ -102,5 +102,13 @@ namespace Accounts.API.Services
         {
             return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
         }
+        
+        public async Task<List<User>> GetUsersAsync()
+        {
+            return await _context.Users
+                .Include(u => u.ContactInfo) 
+                .Include(u => u.UserType)
+                .ToListAsync();
+        }
     }
 }
