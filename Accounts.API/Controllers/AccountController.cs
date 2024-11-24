@@ -15,6 +15,11 @@ namespace Accounts.API.Controllers
             _accountService = accountService;
         }
         
+        public class CreateUserResponse
+        {
+            public Guid UserId { get; set; }
+        }
+        
         [HttpPost("create")]
         public async Task<IActionResult> CreateUser([FromBody] RegisterUserRequest registerUser)
         {
@@ -25,7 +30,7 @@ namespace Accounts.API.Controllers
 
             var userId = await _accountService.CreateUserAsync(registerUser);
 
-            return Ok(new { UserId = userId });
+            return Ok(new CreateUserResponse { UserId = userId });
         }
     }
 }
