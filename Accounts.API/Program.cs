@@ -26,6 +26,9 @@ builder.Services.AddHostedService<KafkaConsumer>();
 builder.Services.AddSingleton<TestService>();
 builder.Services.AddScoped<AccountService>();
 
+// Session singleton
+builder.Services.AddSingleton<SessionStore>();
+
 // Validation
 services.AddFluentValidationAutoValidation();
 services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
@@ -51,6 +54,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<TokenValidationMiddleware>();
 
 app.UseHttpsRedirection();
 

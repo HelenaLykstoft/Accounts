@@ -12,6 +12,7 @@ namespace Accounts.Tests
     {
         private readonly AccountController _controller;
         private readonly AccountService _accountService;
+        private readonly SessionStore _sessionStore;
         private readonly AppDbContext _context;
 
         public AccountControllerTests()
@@ -22,7 +23,8 @@ namespace Accounts.Tests
 
             _context = new AppDbContext(options);
             _accountService = new AccountService(_context);
-            _controller = new AccountController(_accountService);
+            _sessionStore = new SessionStore();
+            _controller = new AccountController(_accountService, _sessionStore);
         }
 
         

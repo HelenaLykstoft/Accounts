@@ -14,4 +14,6 @@ public class User
     public ContactInfo ContactInfo { get; set; } 
     public UserType UserType { get; set; }
     
+    public LoginInformation LoginInformation { get; set; }
+    
 }

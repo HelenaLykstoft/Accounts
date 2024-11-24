@@ -110,5 +110,22 @@ namespace Accounts.API.Services
                 .Include(u => u.UserType)
                 .ToListAsync();
         }
+        
+        public async Task<User?> ValidateUserAsync(string username, string password)
+        {
+            // Fetch the login information, including the associated User
+            var loginInfo = await _context.LoginInformations
+                .Include(li => li.User)
+                .FirstOrDefaultAsync(li => li.Username == username);
+
+            // Validate the password and return the associated User
+            if (loginInfo == null || loginInfo.Password != HashPassword(password))
+            {
+                return null;
+            }
+
+            return loginInfo.User;
+        }
+
     }
 }
