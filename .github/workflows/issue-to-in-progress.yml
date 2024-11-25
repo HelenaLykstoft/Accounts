@@ -8,7 +8,7 @@ env:
   in_progress: In progress
 
 jobs:
-  in_progess:
+  in_progress:
     runs-on: ubuntu-latest
     steps:
       - name: move issue to ${{ env.in_progress }}
