@@ -126,6 +126,13 @@ namespace Accounts.API.Services
 
             return loginInfo.User;
         }
+        
+        public async Task<string?> GetUsernameByIdAsync(Guid userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            return user?.Username;
+        }
+
 
     }
 }

@@ -47,7 +47,6 @@ using (var scope = app.Services.CreateScope())
     await dbContext.AddDefaultUserTypesAsync();
 }
 
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -55,9 +54,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<TokenValidationMiddleware>();
-
 app.UseHttpsRedirection();
+
+app.UseMiddleware<TokenValidationMiddleware>();
 
 app.UseAuthorization();
 

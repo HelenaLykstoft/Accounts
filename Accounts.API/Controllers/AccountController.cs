@@ -38,7 +38,6 @@ namespace Accounts.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
-            // Validate the user credentials
             var user = await _accountService.ValidateUserAsync(loginRequest.Username, loginRequest.Password);
 
             if (user == null)
@@ -46,14 +45,11 @@ namespace Accounts.API.Controllers
                 return Unauthorized("Invalid credentials.");
             }
 
-            // Generate a session token and expiry time
             var token = Guid.NewGuid().ToString();
             var expiry = DateTime.UtcNow.AddHours(1);
 
-            // Add the session to the store
             _sessionStore.AddSession(token, user.Id, expiry);
 
-            // Return the session token and expiry to the client
             return Ok(new { Token = token, Expiry = expiry });
         }
 
@@ -68,14 +64,37 @@ namespace Accounts.API.Controllers
 
 
         [HttpGet("me")]
-        public IActionResult Me([FromHeader(Name = "Authorization")] string token)
+        public IActionResult Me([FromHeader(Name = "Authorization")] string authorization)
         {
-            if (!_sessionStore.TryGetSession(token, out var session) || session.Expiry < DateTime.UtcNow)
+            // Check if Authorization header is provided
+            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))
             {
-                return Unauthorized("Invalid or expired session token.");
+                return Unauthorized(new { message = "Authorization token is required." });
             }
 
-            return Ok(new { UserId = session.UserId });
+            var token = authorization.Substring("Bearer ".Length).Trim();
+
+            // Retrieve the session using the token
+            if (_sessionStore.TryGetSession(token, out var session))
+            {
+                if (session.Expiry >= DateTime.UtcNow) 
+                {
+                    return Ok(new
+                    {
+                        UserId = session.UserId,
+                        Token = token,
+                        Expiry = session.Expiry
+                    });
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Session token has expired." });
+                }
+            }
+            else
+            {
+                return Unauthorized(new { message = "Invalid session token." });
+            }
         }
 
     }
