@@ -38,4 +38,3 @@ jobs:
           project_id: 1
           resource_node_id: ${{ env.ISSUE_NODE_ID }}
           status_value: ${{ env.in_review }}
-
