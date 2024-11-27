@@ -1,35 +1,33 @@
-﻿using Accounts.API.Services;
-
-public class TokenValidationMiddleware
+﻿public class TokenValidationMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly SessionStore _sessionStore;
-    private readonly IServiceProvider _serviceProvider;
 
-    public TokenValidationMiddleware(RequestDelegate next, SessionStore sessionStore, IServiceProvider serviceProvider)
+    public TokenValidationMiddleware(RequestDelegate next, SessionStore sessionStore)
     {
         _next = next;
         _sessionStore = sessionStore;
-        _serviceProvider = serviceProvider;
     }
 
     public async Task Invoke(HttpContext context)
     {
+        // Full path matching for exclusion
+        var path = context.Request.Path.Value;
+        if (path != null && 
+            (path.Equals("/api/Account/login", StringComparison.OrdinalIgnoreCase) || 
+             path.Equals("/api/Account/logout", StringComparison.OrdinalIgnoreCase)))
+        {
+            await _next(context); // Skip validation for login and logout endpoints
+            return;
+        }
+
+        // Validate the Authorization header for other requests
         if (context.Request.Headers.TryGetValue("Authorization", out var token))
         {
             if (_sessionStore.TryGetSession(token, out var session) && session.Expiry >= DateTime.UtcNow)
             {
                 context.Items["UserId"] = session.UserId;
-
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
-                    var username = await accountService.GetUsernameByIdAsync(session.UserId);
-                    if (!string.IsNullOrEmpty(username))
-                    {
-                        context.Items["Username"] = username;
-                    }
-                }
+                context.Items["Token"] = token; // Store the token for further use
             }
             else
             {
@@ -38,7 +36,13 @@ public class TokenValidationMiddleware
                 return;
             }
         }
+        else
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsync("Authorization header is required.");
+            return;
+        }
 
-        await _next(context);
+        await _next(context); // Continue processing the request
     }
 }

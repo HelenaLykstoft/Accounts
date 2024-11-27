@@ -50,7 +50,7 @@ namespace Accounts.API.Controllers
 
             _sessionStore.AddSession(token, user.Id, expiry);
 
-            return Ok(new { Token = token, Expiry = expiry });
+            return Ok(new LoginResponse { Token = token, Expiry = expiry });
         }
 
 
@@ -64,38 +64,22 @@ namespace Accounts.API.Controllers
 
 
         [HttpGet("me")]
-        public IActionResult Me([FromHeader(Name = "Authorization")] string authorization)
+        public IActionResult Me()
         {
-            // Check if Authorization header is provided
-            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))
+            if (HttpContext.Items.TryGetValue("UserId", out var userIdObj) &&
+                HttpContext.Items.TryGetValue("Token", out var tokenObj))
             {
-                return Unauthorized(new { message = "Authorization token is required." });
+                var userId = (Guid)userIdObj;
+                var token = tokenObj.ToString();
+                
+                return Ok(new MeResponse { UserId = userId, Token = token });
+
             }
 
-            var token = authorization.Substring("Bearer ".Length).Trim();
-
-            // Retrieve the session using the token
-            if (_sessionStore.TryGetSession(token, out var session))
-            {
-                if (session.Expiry >= DateTime.UtcNow) 
-                {
-                    return Ok(new
-                    {
-                        UserId = session.UserId,
-                        Token = token,
-                        Expiry = session.Expiry
-                    });
-                }
-                else
-                {
-                    return Unauthorized(new { message = "Session token has expired." });
-                }
-            }
-            else
-            {
-                return Unauthorized(new { message = "Invalid session token." });
-            }
+            return Unauthorized(new { message = "User is not logged in or session is invalid." });
         }
 
-    }
+        }
+
+    
 }
