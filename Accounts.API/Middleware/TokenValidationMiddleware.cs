@@ -15,7 +15,8 @@
         var path = context.Request.Path.Value;
         if (path != null && 
             (path.Equals("/api/Account/login", StringComparison.OrdinalIgnoreCase) || 
-             path.Equals("/api/Account/logout", StringComparison.OrdinalIgnoreCase)))
+             path.Equals("/api/Account/logout", StringComparison.OrdinalIgnoreCase) || 
+             path.Equals("/api/Account/create", StringComparison.OrdinalIgnoreCase)))
         {
             await _next(context); // Skip validation for login and logout endpoints
             return;
