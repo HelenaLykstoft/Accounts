@@ -37,10 +37,12 @@ namespace Accounts.API.Services
 
             // Address validation
             RuleFor(dto => dto.StreetNumber)
+                .NotEmpty().WithMessage("Streetnumber cannot be empty.")
                 .GreaterThan(0).WithMessage("Street number must be greater than 0.")
                 .When(dto => dto.StreetNumber > 0);
 
             RuleFor(dto => dto.StreetName)
+                .NotEmpty().WithMessage("Streetname cannot be empty.")
                 .Matches(@"^[A-Za-zæøåÆØÅ\s]+$")
                 .WithMessage("Street name must only contain letters.")
                 .When(dto => !string.IsNullOrEmpty(dto.StreetName));
@@ -50,6 +52,7 @@ namespace Accounts.API.Services
                 .When(dto => !string.IsNullOrEmpty(dto.City));
 
             RuleFor(dto => dto.PostalCode)
+                .NotEmpty().WithMessage("Postal code cannot be empty.")
                 .InclusiveBetween(1000, 9999).WithMessage("Postal code must be a 4-digit number.")
                 .When(dto => dto.PostalCode > 0);
         }
