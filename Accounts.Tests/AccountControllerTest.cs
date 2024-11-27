@@ -118,6 +118,7 @@ namespace Accounts.Tests
             var createResponse = await _controller.CreateUser(registerUser);
             var createOkResult = Assert.IsType<OkObjectResult>(createResponse);
             var createResult = Assert.IsType<AccountController.CreateUserResponse>(createOkResult.Value);
+            Assert.NotNull(createResult.UserId);
 
             // Act
             var loginRequest = new LoginRequest
@@ -128,25 +129,25 @@ namespace Accounts.Tests
 
             var loginResponse = await _controller.Login(loginRequest);
 
-            // Assert
+            // Assert the response is of type OkObjectResult
             var loginOkResult = Assert.IsType<OkObjectResult>(loginResponse);
 
-            // Parses response into a concrete type
-            var loginResult = loginOkResult.Value as IDictionary<string, object>;
-            Assert.NotNull(loginResult);
+            // Cast the response to LoginResponse
+            var loginResult = Assert.IsType<LoginResponse>(loginOkResult.Value);
 
             // Validates token and expiry
-            Assert.True(loginResult.ContainsKey("Token"));
-            Assert.True(loginResult.ContainsKey("Expiry"));
+            Assert.NotNull(loginResult.Token);
+            Assert.True(loginResult.Expiry > DateTime.UtcNow);
 
-            var token = loginResult["Token"]?.ToString();
-            var expiry = DateTime.Parse(loginResult["Expiry"]?.ToString() ?? string.Empty);
-
-            Assert.NotNull(token);
-            Assert.True(_sessionStore.TryGetSession(token, out var session));
-            Assert.Equal(createResult.UserId, session.UserId);
-            Assert.True(session.Expiry > DateTime.UtcNow);
+            // Ensure session is stored properly using TryGetSession
+            var sessionExists = _sessionStore.TryGetSession(loginResult.Token, out var session);
+            Assert.True(sessionExists); // Check if the session exists
+            Assert.NotNull(session); // Ensure the session is not null
+            Assert.Equal(createResult.UserId, session.UserId); // Verify the UserId matches
+            Assert.True(session.Expiry > DateTime.UtcNow); // Ensure the session expiry is in the future
         }
+
+
 
         [Fact]
         public async Task Login_ReturnsUnauthorized_WhenInvalidCredentials()
