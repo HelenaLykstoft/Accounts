@@ -58,18 +58,22 @@ namespace Accounts.Tests
                 City = "Copenhagen"
             };
 
-            var result = await _service.CreateUserAsync(userRequest);
+            // Call the CreateUserAsync method, which returns the user's ID
+            var createdUserId = await _service.CreateUserAsync(userRequest);
 
+            // Retrieve the user from the database using the created user's ID
             var addedUser = await _dbContext.Users
                 .Include(u => u.ContactInfo)
                 .ThenInclude(c => c.Address)
                 .ThenInclude(a => a.City)
-                .FirstOrDefaultAsync(u => u.Username == userRequest.Username);
+                .FirstOrDefaultAsync(u => u.Id == createdUserId);
 
+            // Assert the user was created successfully
             Assert.NotNull(addedUser);
             Assert.Equal(userRequest.Email, addedUser.ContactInfo.Email);
             Assert.Equal(userRequest.City, addedUser.ContactInfo.Address.City.Name);
         }
+
 
         [Fact]
         public async Task CreateUser_ShouldThrowException_ForInvalidUser()
