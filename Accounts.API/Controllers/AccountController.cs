@@ -39,12 +39,18 @@ namespace Accounts.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
             var user = await _accountService.ValidateUserAsync(loginRequest.Username, loginRequest.Password);
-
+            var activeSession = _sessionStore.GetAllSessions()
+                .FirstOrDefault(s => s.UserId == user.Id && s.Expiry > DateTime.UtcNow);
+            
             if (user == null)
             {
                 return Unauthorized("Invalid credentials.");
             }
             
+            if (_sessionStore.HasActiveSessionForUser(user.Id))
+            {
+                return BadRequest($"User already has an active session. Session expires at: {activeSession.Expiry.ToString("yyyy-MM-dd HH:mm:ss")}");
+            }
 
             var token = Guid.NewGuid().ToString();
             var expiry = DateTime.UtcNow.AddHours(1);
@@ -53,8 +59,7 @@ namespace Accounts.API.Controllers
 
             return Ok(new LoginResponse { Token = token, Expiry = expiry });
         }
-
-
+        
 
         [HttpGet("logout")]
         public IActionResult Logout([FromHeader(Name = "Authorization")] string token)

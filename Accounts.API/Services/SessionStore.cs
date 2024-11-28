@@ -21,6 +21,19 @@
     {
         return _sessions.Values;
     }
+    
+    public virtual bool HasActiveSessionForUser(Guid userId)
+    {
+        // Iterate through all sessions to check if the user already has an active session
+        foreach (var session in _sessions.Values)
+        {
+            if (session.UserId == userId && session.Expiry > DateTime.UtcNow)
+            {
+                return true; // The user has an active session
+            }
+        }
+        return false; // No active session found for the user
+    }
 }
 
 public class Session

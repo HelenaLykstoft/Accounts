@@ -25,6 +25,7 @@ namespace Accounts.API.Services
                 throw new InvalidOperationException("Database context is not initialized.");
             }
             
+            
             var validationResult = await _validator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {

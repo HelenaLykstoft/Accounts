@@ -27,13 +27,6 @@
         {
             if (_sessionStore.TryGetSession(token, out var session) && session.Expiry >= DateTime.UtcNow)
             {
-                // Ensure only one active token per user
-                if (HasActiveSessionForUser(session.UserId))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsync("This user is already logged in with another token.");
-                    return;
-                }
 
                 // Store user ID and token for further use
                 context.Items["UserId"] = session.UserId;
@@ -54,18 +47,5 @@
         }
 
         await _next(context); // Continue processing the request
-    }
-
-    public virtual bool HasActiveSessionForUser(Guid userId)
-    {
-        // Iterate through all sessions to check if a user already has an active session
-        foreach (var session in _sessionStore.GetAllSessions())
-        {
-            if (session.UserId == userId && session.Expiry > DateTime.UtcNow)
-            {
-                return true; // The user has an active session
-            }
-        }
-        return false; // No active session found for the user
     }
 }
