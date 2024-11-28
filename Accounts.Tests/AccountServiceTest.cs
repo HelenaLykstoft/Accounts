@@ -14,8 +14,7 @@ namespace Accounts.Tests
         private readonly AppDbContext _dbContext;
         private readonly AccountService _service;
         private readonly Mock<IValidator<RegisterUserRequest>> _validatorMock;
-
-
+        
         public AccountServiceTest()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
