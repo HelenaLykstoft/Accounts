@@ -44,6 +44,7 @@ namespace Accounts.API.Controllers
             {
                 return Unauthorized("Invalid credentials.");
             }
+            
 
             var token = Guid.NewGuid().ToString();
             var expiry = DateTime.UtcNow.AddHours(1);
@@ -80,6 +81,5 @@ namespace Accounts.API.Controllers
         }
 
         }
-
     
 }

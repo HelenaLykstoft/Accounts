@@ -3,9 +3,11 @@ using Accounts.API.DTO;
 using Accounts.API.Services;
 using Accounts.Domain.Entities;
 using Accounts.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
 
 namespace Accounts.Tests
@@ -16,17 +18,31 @@ namespace Accounts.Tests
         private readonly AccountService _accountService;
         private readonly SessionStore _sessionStore;
         private readonly AppDbContext _context;
+        private readonly Mock<IValidator<RegisterUserRequest>> _validatorMock;
+        private readonly Mock<TokenValidationMiddleware> _tokenValidationMiddlewareMock;
+
 
         public AccountControllerTests()
         {
+            // Create the in-memory database
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "TestDb")
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                 .Options;
-
+            
             _context = new AppDbContext(options);
-            _accountService = new AccountService(_context);
+
+            // Create mock for the validator
+            _validatorMock = new Mock<IValidator<RegisterUserRequest>>();
+            _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserRequest>(), default))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
+            // Now we pass both the DbContext and the validator to the AccountService
+            _accountService = new AccountService(_context, _validatorMock.Object);
+
             _sessionStore = new SessionStore();
             _controller = new AccountController(_accountService, _sessionStore);
+            _tokenValidationMiddlewareMock = new Mock<TokenValidationMiddleware>();
 
             // Mock HttpContext and ControllerContext
             var httpContextMock = new Mock<HttpContext>();
@@ -119,6 +135,8 @@ namespace Accounts.Tests
             var createOkResult = Assert.IsType<OkObjectResult>(createResponse);
             var createResult = Assert.IsType<AccountController.CreateUserResponse>(createOkResult.Value);
             Assert.NotNull(createResult.UserId);
+            _tokenValidationMiddlewareMock.Setup(middleware => middleware.HasActiveSessionForUser(It.IsAny<Guid>()))
+                .Returns(false);
 
             // Act
             var loginRequest = new LoginRequest
@@ -146,8 +164,6 @@ namespace Accounts.Tests
             Assert.Equal(createResult.UserId, session.UserId); // Verify the UserId matches
             Assert.True(session.Expiry > DateTime.UtcNow); // Ensure the session expiry is in the future
         }
-
-
 
         [Fact]
         public async Task Login_ReturnsUnauthorized_WhenInvalidCredentials()
@@ -206,7 +222,9 @@ namespace Accounts.Tests
             var createResponse = await _controller.CreateUser(registerUser);
             var createOkResult = Assert.IsType<OkObjectResult>(createResponse);
             var createResult = Assert.IsType<AccountController.CreateUserResponse>(createOkResult.Value);
-
+            _tokenValidationMiddlewareMock.Setup(middleware => middleware.HasActiveSessionForUser(It.IsAny<Guid>()))
+                .Returns(false);
+            
             var loginRequest = new LoginRequest
             {
                 Username = registerUser.Username,

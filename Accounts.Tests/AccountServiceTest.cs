@@ -2,27 +2,38 @@
 using Accounts.API.Services;
 using Accounts.Domain.Entities;
 using Accounts.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Moq;
 
-namespace Accounts.UnitTests
+namespace Accounts.Tests
 {
     public class AccountServiceTest : IDisposable
     {
         private readonly AppDbContext _dbContext;
         private readonly AccountService _service;
+        private readonly Mock<IValidator<RegisterUserRequest>> _validatorMock;
+
 
         public AccountServiceTest()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "UserDbTest") 
+                .UseInMemoryDatabase(databaseName: "TestDb")
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                 .Options;
 
 
             _dbContext = new AppDbContext(options);
             _dbContext.Database.EnsureDeleted(); 
             _dbContext.Database.EnsureCreated(); 
-
-            _service = new AccountService(_dbContext); 
+            
+            // Mock the validator
+            _validatorMock = new Mock<IValidator<RegisterUserRequest>>();
+            _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserRequest>(), default))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            
+            _service = new AccountService(_dbContext, _validatorMock.Object); 
         }
 
         public void Dispose()
@@ -77,8 +88,11 @@ namespace Accounts.UnitTests
                 City = "Nowhere"
             };
 
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateUserAsync(userRequest));
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateUserAsync(userRequest));
+            Assert.Contains("Required properties", exception.Message);
+
         }
+        
 
         [Fact]
         public async Task GetUsers_ShouldReturnAllUsers()

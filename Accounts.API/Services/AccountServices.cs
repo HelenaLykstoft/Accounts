@@ -17,7 +17,7 @@ namespace Accounts.API.Services
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
-        public async Task<Guid> CreateUserAsync(RegisterUserRequest dto)
+        public virtual async Task<Guid> CreateUserAsync(RegisterUserRequest dto)
         {
             
             if (_context == null)
