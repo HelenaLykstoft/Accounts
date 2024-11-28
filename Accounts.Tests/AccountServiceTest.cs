@@ -24,8 +24,7 @@ namespace Accounts.Tests
 
 
             _dbContext = new AppDbContext(options);
-            _dbContext.Database.EnsureDeleted(); 
-            _dbContext.Database.EnsureCreated(); 
+
             
             // Mock the validator
             _validatorMock = new Mock<IValidator<RegisterUserRequest>>();
@@ -75,6 +74,7 @@ namespace Accounts.Tests
         [Fact]
         public async Task CreateUser_ShouldThrowException_ForInvalidUser()
         {
+            
             var userRequest = new RegisterUserRequest
             {
                 Username = "", 
@@ -98,34 +98,29 @@ namespace Accounts.Tests
         {
             for (int i = 1; i <= 5; i++)
             {
-                var user = new User
+                var userRequest = new RegisterUserRequest
                 {
                     FirstName = $"First{i}",
                     LastName = $"Last{i}",
-                    Username = $"user{i}",
-                    ContactInfo = new ContactInfo
-                    {
-                        Email = $"user{i}@example.com",
-                        PhoneNumber = $"+451111111{i}",
-                        Address = new Address
-                        {
-                            StreetNumber = i,
-                            StreetName = "Main St",
-                            City = new City { PostalCode = 1000 + i, Name = "City" + i }
-                        }
-                    },
-                    UserTypeId = 1 
+                    Username = $"User{i}", 
+                    Password = $"Passw{i}", 
+                    Email = $"Mail{i}@example.com", 
+                    PhoneNumber = $"2435675{i}", 
+                    StreetNumber = i, 
+                    StreetName = "Main St",
+                    PostalCode = 9999, 
+                    City = "Nowhere"
                 };
+                await _service.CreateUserAsync(userRequest);
 
-                _dbContext.Users.Add(user);
             }
 
             await _dbContext.SaveChangesAsync();
 
-            var result = await _service.GetUsersAsync();
+            var result = await _service.GetUsersCountAsync();
 
             Assert.NotNull(result);
-            Assert.Equal(5, result.Count);
+            Assert.Equal(5, result);
         }
     }
 }
