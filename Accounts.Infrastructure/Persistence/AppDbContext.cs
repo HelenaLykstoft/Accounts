@@ -87,6 +87,13 @@ namespace Accounts.Infrastructure.Persistence
                 .Property(l => l.Username).HasColumnName("username");
             modelBuilder.Entity<LoginInformation>()
                 .Property(l => l.Password).HasColumnName("password");
+            modelBuilder.Entity<LoginInformation>()
+                .HasOne(li => li.User)
+                .WithOne(u => u.LoginInformation)
+                .HasForeignKey<User>(u => u.Username)
+                .HasPrincipalKey<LoginInformation>(li => li.Username)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
             // Defines foreign key relationships
             modelBuilder.Entity<User>()

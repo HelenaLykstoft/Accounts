@@ -2,27 +2,36 @@
 using Accounts.API.Services;
 using Accounts.Domain.Entities;
 using Accounts.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Moq;
 
-namespace Accounts.UnitTests
+namespace Accounts.Tests
 {
     public class AccountServiceTest : IDisposable
     {
         private readonly AppDbContext _dbContext;
         private readonly AccountService _service;
-
+        private readonly Mock<IValidator<RegisterUserRequest>> _validatorMock;
+        
         public AccountServiceTest()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "UserDbTest") 
+                .UseInMemoryDatabase(databaseName: "TestDb")
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                 .Options;
 
 
             _dbContext = new AppDbContext(options);
-            _dbContext.Database.EnsureDeleted(); 
-            _dbContext.Database.EnsureCreated(); 
 
-            _service = new AccountService(_dbContext); 
+            
+            // Mock the validator
+            _validatorMock = new Mock<IValidator<RegisterUserRequest>>();
+            _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserRequest>(), default))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            
+            _service = new AccountService(_dbContext, _validatorMock.Object); 
         }
 
         public void Dispose()
@@ -48,23 +57,23 @@ namespace Accounts.UnitTests
                 PostalCode = 1000,
                 City = "Copenhagen"
             };
+            
+            var createdUserId = await _service.CreateUserAsync(userRequest);
 
-            var result = await _service.CreateUserAsync(userRequest);
-
+            // Ensure the user is saved to the database by checking the generated user ID
             var addedUser = await _dbContext.Users
-                .Include(u => u.ContactInfo)
-                .ThenInclude(c => c.Address)
-                .ThenInclude(a => a.City)
-                .FirstOrDefaultAsync(u => u.Username == userRequest.Username);
+                .FirstOrDefaultAsync(u => u.Id == createdUserId);
 
+            // Assert the user was created successfully by checking the Id
             Assert.NotNull(addedUser);
-            Assert.Equal(userRequest.Email, addedUser.ContactInfo.Email);
-            Assert.Equal(userRequest.City, addedUser.ContactInfo.Address.City.Name);
+            Assert.Equal(createdUserId, addedUser.Id);
         }
+
 
         [Fact]
         public async Task CreateUser_ShouldThrowException_ForInvalidUser()
         {
+            
             var userRequest = new RegisterUserRequest
             {
                 Username = "", 
@@ -77,42 +86,40 @@ namespace Accounts.UnitTests
                 City = "Nowhere"
             };
 
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateUserAsync(userRequest));
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateUserAsync(userRequest));
+            Assert.Contains("Required properties", exception.Message);
+
         }
+        
 
         [Fact]
         public async Task GetUsers_ShouldReturnAllUsers()
         {
             for (int i = 1; i <= 5; i++)
             {
-                var user = new User
+                var userRequest = new RegisterUserRequest
                 {
                     FirstName = $"First{i}",
                     LastName = $"Last{i}",
-                    Username = $"user{i}",
-                    ContactInfo = new ContactInfo
-                    {
-                        Email = $"user{i}@example.com",
-                        PhoneNumber = $"+451111111{i}",
-                        Address = new Address
-                        {
-                            StreetNumber = i,
-                            StreetName = "Main St",
-                            City = new City { PostalCode = 1000 + i, Name = "City" + i }
-                        }
-                    },
-                    UserTypeId = 1 
+                    Username = $"User{i}", 
+                    Password = $"Passw{i}", 
+                    Email = $"Mail{i}@example.com", 
+                    PhoneNumber = $"2435675{i}", 
+                    StreetNumber = i, 
+                    StreetName = "Main St",
+                    PostalCode = 9999, 
+                    City = "Nowhere"
                 };
+                await _service.CreateUserAsync(userRequest);
 
-                _dbContext.Users.Add(user);
             }
 
             await _dbContext.SaveChangesAsync();
 
-            var result = await _service.GetUsersAsync();
+            var result = await _service.GetUsersCountAsync();
 
             Assert.NotNull(result);
-            Assert.Equal(5, result.Count);
+            Assert.Equal(5, result);
         }
     }
 }

@@ -11,104 +11,140 @@ namespace Accounts.API.Services
         private readonly AppDbContext _context;
         private readonly IValidator<RegisterUserRequest> _validator;
 
-        public AccountService(AppDbContext context)
+        public AccountService(AppDbContext context, IValidator<RegisterUserRequest> validator)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
-        public async Task<Guid> CreateUserAsync(RegisterUserRequest dto)
+        public virtual async Task<Guid> CreateUserAsync(RegisterUserRequest dto)
         {
             
-            var existingLoginInfo = await _context.LoginInformations
-                .FirstOrDefaultAsync(li => li.Username == dto.Username);
-
-            if (existingLoginInfo != null)
+            if (_context == null)
             {
-                throw new InvalidOperationException("Username is already taken.");
+                throw new InvalidOperationException("Database context is not initialized.");
             }
             
-            // Creates or finds the city
-            var city = await _context.Cities.FirstOrDefaultAsync(c => c.PostalCode == dto.PostalCode);
-            if (city == null)
+            
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
             {
-                city = new City
+                throw new ValidationException(validationResult.Errors);
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Check if username already exists
+                var existingLoginInfo = await _context.LoginInformations
+                    .FirstOrDefaultAsync(li => li.Username == dto.Username);
+
+                if (existingLoginInfo != null)
                 {
-                    PostalCode = dto.PostalCode,
-                    Name = dto.City
+                    throw new InvalidOperationException("Username is already taken.");
+                }
+
+                // Create or find the city
+                var city = await _context.Cities.FirstOrDefaultAsync(c => c.PostalCode == dto.PostalCode)
+                       ?? new City { PostalCode = dto.PostalCode, Name = dto.City };
+                if (city.Name != dto.City)
+                {
+                    city = new City
+                    {
+                        PostalCode = dto.PostalCode,
+                        Name = dto.City
+                    };
+                    await _context.Cities.AddAsync(city);
+                    await _context.SaveChangesAsync();
+                }
+
+
+                // Create address
+                var address = new Address
+                {
+                    Id = Guid.NewGuid(),
+                    StreetNumber = dto.StreetNumber,
+                    StreetName = dto.StreetName,
+                    City = city
                 };
-                await _context.Cities.AddAsync(city);
+                await _context.Addresses.AddAsync(address);
+
+                // Create contact info
+                var contactInfo = new ContactInfo
+                {
+                    Id = Guid.NewGuid(),
+                    Email = dto.Email,
+                    PhoneNumber = dto.PhoneNumber,
+                    AddressId = address.Id
+                };
+                await _context.ContactInfos.AddAsync(contactInfo);
+
+                // Hash password and create login info
+                var passwordHash = HashPassword(dto.Password);
+                var loginInfo = new LoginInformation
+                {
+                    Username = dto.Username,
+                    Password = passwordHash
+                };
+                await _context.LoginInformations.AddAsync(loginInfo);
+
+                // Create user
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    Username = dto.Username,
+                    UserTypeId = 1,
+                    ContactInfoId = contactInfo.Id
+                };
+                await _context.Users.AddAsync(user);
+
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return user.Id;
             }
-
-            // Creates address and links to city
-            var address = new Address
+            catch ( Exception ex)
             {
-                Id = Guid.NewGuid(),
-                StreetNumber = dto.StreetNumber,
-                StreetName = dto.StreetName,
-                City = city
-            };
-            await _context.Addresses.AddAsync(address);
-            await _context.SaveChangesAsync();
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("Failed to create user: " + ex.Message, ex);
 
-            // Creates the ContactInfo and link it to the address
-            var contactInfo = new ContactInfo
-            {
-                Id = Guid.NewGuid(),
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                AddressId = address.Id 
-            };
-            await _context.ContactInfos.AddAsync(contactInfo);
-            await _context.SaveChangesAsync();
-
-            // Creates the Login Information (hashed password)
-            // Might needs changing compared to how we are gonna handle login
-            var passwordHash = HashPassword(dto.Password);
-            var loginInfo = new LoginInformation
-            {
-                Username = dto.Username,
-                Password = passwordHash 
-            };
-            await _context.LoginInformations.AddAsync(loginInfo);
-            await _context.SaveChangesAsync();
-
-            // Creates the User and link it to contact info and login info
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Username = dto.Username,
-                UserTypeId = dto.UserTypeId, 
-                ContactInfoId = contactInfo.Id,
-            };
-
-            // Checks for valid UserType
-            var userType = await _context.UserTypes.FirstOrDefaultAsync(ut => ut.Id == dto.UserTypeId);
-            if (userType == null)
-            {
-                throw new ArgumentException("Invalid user type.");
             }
-
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-
-            // The return. Right now it returns the user id when a user is created.
-            return user.Id;
         }
+
 
         private string HashPassword(string password)
         {
             return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
         }
-        
-        public async Task<List<User>> GetUsersAsync()
+
+        public async Task<int> GetUsersCountAsync()
         {
-            return await _context.Users
-                .Include(u => u.ContactInfo) 
-                .Include(u => u.UserType)
-                .ToListAsync();
+            return await _context.Users.CountAsync();
+        }
+
+
+        public async Task<User?> ValidateUserAsync(string username, string password)
+        {
+            // Fetch the login information, including the associated User
+            var loginInfo = await _context.LoginInformations
+                .Include(li => li.User)
+                .FirstOrDefaultAsync(li => li.Username == username);
+
+            // Validate the password and return the associated User
+            if (loginInfo == null || loginInfo.Password != HashPassword(password))
+            {
+                return null;
+            }
+
+            return loginInfo.User;
+        }
+
+        public async Task<string?> GetUsernameByIdAsync(Guid userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            return user?.Username;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Accounts.Domain.Entities;
+﻿using System.ComponentModel;
+using Accounts.Domain.Entities;
 
 namespace Accounts.API.DTO
 {
@@ -9,6 +10,8 @@ namespace Accounts.API.DTO
         public string Username { get; set; }
         
         public string Password { get; set; }
+        
+        [ReadOnly(true)]
         public int UserTypeId { get; set; } 
 
         // Contact Information
@@ -22,3 +25,4 @@ namespace Accounts.API.DTO
         public string City { get; set; } 
     }
 }
+
