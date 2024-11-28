@@ -57,10 +57,12 @@ namespace Accounts.Tests
                 PostalCode = 1000,
                 City = "Copenhagen"
             };
-
+            
             // Call the CreateUserAsync method, which returns the user's ID
             var createdUserId = await _service.CreateUserAsync(userRequest);
 
+            await _dbContext.SaveChangesAsync();
+            
             // Retrieve the user from the database using the created user's ID
             var addedUser = await _dbContext.Users
                 .Include(u => u.ContactInfo)
