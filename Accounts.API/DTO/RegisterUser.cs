@@ -11,7 +11,6 @@ namespace Accounts.API.DTO
         
         public string Password { get; set; }
         
-        [ReadOnly(true)]
         public int UserTypeId { get; set; } 
 
         // Contact Information
