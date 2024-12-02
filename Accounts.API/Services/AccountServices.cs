@@ -170,18 +170,9 @@ namespace Accounts.API.Services
 
         public async Task SeedAdminUserAsync(string? token = null)
         {
-            string? username = Environment.GetEnvironmentVariable("ADMIN_USERNAME");
-            string? password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
-
-            if (string.IsNullOrEmpty(username))
-            {
-                username = "admin"; // Set to default if not found
-            }
-
-            if (string.IsNullOrEmpty(password))
-            {
-                password = "Admin@123"; // Set to default if not found
-            }
+            string username = Environment.GetEnvironmentVariable("ADMIN_USERNAME");
+            string password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+            
 
             // Check if the user is admin
             bool isAdmin = token != null && await IsUserAdminAsync(token);
