@@ -8,11 +8,14 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using DotNetEnv;
 
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
+// Load ENV file
+Env.Load("Accounts/.env");
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -70,6 +73,8 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.AddDefaultUserTypesAsync();
+    var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
+    await accountService.SeedAdminUserAsync();
 }
 
 // Configure the HTTP request pipeline.

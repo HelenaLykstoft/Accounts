@@ -9,8 +9,25 @@
 
     public virtual bool TryGetSession(string token, out Session? session)
     {
-        return _sessions.TryGetValue(token, out session);
+        if (_sessions.TryGetValue(token, out session))
+        {
+            if (session.Expiry > DateTime.UtcNow)
+            {
+                return true; // Valid session
+            }
+            else
+            {
+                // Remove expired session
+                _sessions.Remove(token);
+                session = null;
+                return false;
+            }
+        }
+
+        session = null;
+        return false; // No session found
     }
+
     
     public virtual bool RemoveSession(string token)
     {

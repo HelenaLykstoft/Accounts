@@ -107,7 +107,7 @@ namespace Accounts.Tests
                     PhoneNumber = $"2435675{i}", 
                     StreetNumber = i, 
                     StreetName = "Main St",
-                    PostalCode = 9999, 
+                    PostalCode = 9998, 
                     City = "Nowhere"
                 };
                 await _service.CreateUserAsync(userRequest);
