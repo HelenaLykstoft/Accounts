@@ -2,6 +2,7 @@
 using Accounts.API.DTO;
 using Accounts.API.Services;
 using Accounts.Core.Entities;
+using Accounts.Core.Ports.Driven;
 using Accounts.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;

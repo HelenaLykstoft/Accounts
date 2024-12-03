@@ -3,6 +3,7 @@ using Accounts.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Accounts.Core.Entities;
 using FluentValidation;
+using Accounts.Core.Ports.Driven;
 
 namespace Accounts.API.Services
 {
@@ -10,7 +11,7 @@ namespace Accounts.API.Services
     {
         private readonly AppDbContext _context;
         private readonly IValidator<RegisterUserRequest> _validator;
-        public SessionStore? SessionStore { get; set; }
+        public ISessionStore? SessionStore { get; set; }
 
         public AccountService(AppDbContext context, IValidator<RegisterUserRequest> validator)
         {

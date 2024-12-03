@@ -9,6 +9,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using DotNetEnv;
+using Accounts.Core.Ports.Driven;
+using Accounts.Infrastructure.Repositories;
+using Accounts.Core.Models;
+using Accounts.Core.Validators;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,15 +56,27 @@ builder.Services.AddSingleton<KafkaProducer>();
 // Add the kafka consumer service as a hosted service (background service that runs for the lifetime of the application):
 builder.Services.AddHostedService<KafkaConsumer>();
 builder.Services.AddSingleton<TestService>();
+
 builder.Services.AddScoped<AccountService>();
 
-// Session singleton
-builder.Services.AddSingleton<SessionStore>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+builder.Services.AddScoped<ICityRepository, CityRepository>();
+builder.Services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
+builder.Services.AddScoped<ILoginInfoRepository, LoginInfoRepository>();
 
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+builder.Services.AddSingleton<ISessionStore, SessionStore>();
+builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
+
+// Validation
+//services.AddFluentValidationAutoValidation(); 
+//services.AddValidatorsFromAssemblyContaining<CreateUserCommandValidator>(); 
+//services.AddTransient<IValidator<CreateUserCommand>, CreateUserCommandValidator>();
 // Validation
 services.AddFluentValidationAutoValidation();
 services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
-services.AddTransient<IValidator<RegisterUserRequest>, RegisterUserValidator>();
+services.AddTransient<IValidator<CreateUserCommand>, CreateUserCommandValidator>();
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>

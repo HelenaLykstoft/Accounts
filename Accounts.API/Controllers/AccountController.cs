@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Accounts.API.DTO;
 using Accounts.API.Services;
+using Accounts.Core.Ports.Driven;
+using Accounts.Core.Entities;
 
 namespace Accounts.API.Controllers
 {
@@ -9,9 +11,9 @@ namespace Accounts.API.Controllers
     public class AccountController : ControllerBase
     {
         private readonly AccountService _accountService;
-        private readonly SessionStore _sessionStore;
+        private readonly ISessionStore _sessionStore;
 
-        public AccountController(AccountService accountService, SessionStore  sessionStore)
+        public AccountController(AccountService accountService, ISessionStore  sessionStore)
         {
             _accountService = accountService;
             _sessionStore = sessionStore;
