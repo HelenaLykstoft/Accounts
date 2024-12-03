@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Accounts.Domain.Entities;
+using Accounts.Core.Entities;
 
 namespace Accounts.Infrastructure.Persistence
 {

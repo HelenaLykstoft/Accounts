@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F0DA060A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Tests", "Accounts.Tests\Accounts.Tests.csproj", "{CA83922C-25C4-45AB-9233-6CAF253424AA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Domain", "Accounts.Domain\Accounts.Domain.csproj", "{2AC726C5-0A81-488E-BA60-41F971694013}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Core", "Accounts.Core\Accounts.Core.csproj", "{2AC726C5-0A81-488E-BA60-41F971694013}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounts.Infrastructure", "Accounts.Infrastructure\Accounts.Infrastructure.csproj", "{AC76FC57-D38C-4952-AD32-C63FB3A1CA00}"
 EndProject

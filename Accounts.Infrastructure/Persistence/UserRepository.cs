@@ -1,5 +1,5 @@
-﻿using Accounts.Domain.Entities;
-using Accounts.Domain.Interfaces;
+﻿using Accounts.Core.Entities;
+using Accounts.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Accounts.Infrastructure.Persistence

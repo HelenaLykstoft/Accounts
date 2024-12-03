@@ -1,6 +1,6 @@
 ﻿using Accounts.API.DTO;
 using Accounts.API.Services;
-using Accounts.Domain.Entities;
+using Accounts.Core.Entities;
 using Accounts.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;

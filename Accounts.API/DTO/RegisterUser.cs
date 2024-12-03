@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using Accounts.Domain.Entities;
+using Accounts.Core.Entities;
 
 namespace Accounts.API.DTO
 {

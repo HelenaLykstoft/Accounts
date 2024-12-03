@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Accounts.Domain.Entities
+namespace Accounts.Core.Entities
 {
     public class Address
     {

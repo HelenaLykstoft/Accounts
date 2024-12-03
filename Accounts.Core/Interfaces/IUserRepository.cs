@@ -1,7 +1,7 @@
 ﻿
-using Accounts.Domain.Entities;
+using Accounts.Core.Entities;
 
-namespace Accounts.Domain.Interfaces
+namespace Accounts.Core.Interfaces
 {
     public interface IUserRepository
     {

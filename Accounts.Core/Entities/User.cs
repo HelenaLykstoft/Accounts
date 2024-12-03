@@ -1,4 +1,4 @@
-﻿using Accounts.Domain.Entities;
+﻿using Accounts.Core.Entities;
 
 public class User
 {

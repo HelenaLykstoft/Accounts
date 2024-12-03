@@ -1,7 +1,7 @@
 ﻿using Accounts.API.DTO;
 using Accounts.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Accounts.Domain.Entities;
+using Accounts.Core.Entities;
 using FluentValidation;
 
 namespace Accounts.API.Services
@@ -19,119 +19,119 @@ namespace Accounts.API.Services
         }
 
         public virtual async Task<Guid> CreateUserAsync(RegisterUserRequest dto, 
-    bool allowAdminCreation = false, bool isAdmin = false)
-{
-    if (_context == null)
-    {
-        throw new InvalidOperationException("Database context is not initialized.");
-    }
-
-    // If not allowing admin creation and trying to create an admin user, throw exception
-    if (dto.UserTypeId == 3 && !allowAdminCreation)
-    {
-        throw new UnauthorizedAccessException("Only an admin can create an admin user.");
-    }
-
-    // If an admin is not logged in and trying to create an admin user, deny
-    if (dto.UserTypeId == 3 && !isAdmin)
-    {
-        throw new UnauthorizedAccessException("Only an admin can create an admin user.");
-    }
-
-    // Your validation code here
-    var validationResult = await _validator.ValidateAsync(dto);
-    if (!validationResult.IsValid)
-    {
-        throw new ValidationException(validationResult.Errors);
-    }
-
-    await using var transaction = await _context.Database.BeginTransactionAsync();
-    try
-    {
-        // Check if username already exists
-        var existingLoginInfo = await _context.LoginInformations
-            .FirstOrDefaultAsync(li => li.Username == dto.Username);
-
-        if (existingLoginInfo != null)
+            bool allowAdminCreation = false, bool isAdmin = false)
         {
-            throw new InvalidOperationException("Username is already taken.");
-        }
-
-        // Create or find the city
-        var city = await _context.Cities.FirstOrDefaultAsync(c => c.PostalCode == dto.PostalCode)
-                   ?? new City { PostalCode = dto.PostalCode, Name = dto.City };
-        if (city.Name != dto.City)
-        {
-            city = new City
+            if (_context == null)
             {
-                PostalCode = dto.PostalCode,
-                Name = dto.City
-            };
-            await _context.Cities.AddAsync(city);
-            await _context.SaveChangesAsync();
+                throw new InvalidOperationException("Database context is not initialized.");
+            }
+
+            // If not allowing admin creation and trying to create an admin user, throw exception
+            if (dto.UserTypeId == 3 && !allowAdminCreation)
+            {
+                throw new UnauthorizedAccessException("Only an admin can create an admin user.");
+            }
+
+            // If an admin is not logged in and trying to create an admin user, deny
+            if (dto.UserTypeId == 3 && !isAdmin)
+            {
+                throw new UnauthorizedAccessException("Only an admin can create an admin user.");
+            }
+
+            // Your validation code here
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Check if username already exists
+                var existingLoginInfo = await _context.LoginInformations
+                    .FirstOrDefaultAsync(li => li.Username == dto.Username);
+
+                if (existingLoginInfo != null)
+                {
+                    throw new InvalidOperationException("Username is already taken.");
+                }
+
+                // Create or find the city
+                var city = await _context.Cities.FirstOrDefaultAsync(c => c.PostalCode == dto.PostalCode)
+                           ?? new City { PostalCode = dto.PostalCode, Name = dto.City };
+                if (city.Name != dto.City)
+                {
+                    city = new City
+                    {
+                        PostalCode = dto.PostalCode,
+                        Name = dto.City
+                    };
+                    await _context.Cities.AddAsync(city);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Create address
+                var address = new Address
+                {
+                    Id = Guid.NewGuid(),
+                    StreetNumber = dto.StreetNumber,
+                    StreetName = dto.StreetName,
+                    City = city
+                };
+                await _context.Addresses.AddAsync(address);
+
+                // Create contact info
+                var contactInfo = new ContactInfo
+                {
+                    Id = Guid.NewGuid(),
+                    Email = dto.Email,
+                    PhoneNumber = dto.PhoneNumber,
+                    AddressId = address.Id
+                };
+                await _context.ContactInfos.AddAsync(contactInfo);
+
+                // Hash password and create login info
+                var passwordHash = HashPassword(dto.Password);
+                var loginInfo = new LoginInformation
+                {
+                    Username = dto.Username,
+                    Password = passwordHash
+                };
+                await _context.LoginInformations.AddAsync(loginInfo);
+
+                // Handle userTypeId
+                int userTypeId = dto.UserTypeId;
+
+                // Check for admin creation, only admins can create admin users unless it's allowed explicitly
+                if (userTypeId == 3 && !allowAdminCreation)
+                {
+                    throw new UnauthorizedAccessException("Only an admin can create another admin user.");
+                }
+
+                // Create user
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    Username = dto.Username,
+                    UserTypeId = userTypeId,
+                    ContactInfoId = contactInfo.Id
+                };
+                await _context.Users.AddAsync(user);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return user.Id;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("Failed to create user: " + ex.Message, ex);
+            }
         }
-
-        // Create address
-        var address = new Address
-        {
-            Id = Guid.NewGuid(),
-            StreetNumber = dto.StreetNumber,
-            StreetName = dto.StreetName,
-            City = city
-        };
-        await _context.Addresses.AddAsync(address);
-
-        // Create contact info
-        var contactInfo = new ContactInfo
-        {
-            Id = Guid.NewGuid(),
-            Email = dto.Email,
-            PhoneNumber = dto.PhoneNumber,
-            AddressId = address.Id
-        };
-        await _context.ContactInfos.AddAsync(contactInfo);
-
-        // Hash password and create login info
-        var passwordHash = HashPassword(dto.Password);
-        var loginInfo = new LoginInformation
-        {
-            Username = dto.Username,
-            Password = passwordHash
-        };
-        await _context.LoginInformations.AddAsync(loginInfo);
-
-        // Handle userTypeId
-        int userTypeId = dto.UserTypeId;
-
-        // Check for admin creation, only admins can create admin users unless it's allowed explicitly
-        if (userTypeId == 3 && !allowAdminCreation)
-        {
-            throw new UnauthorizedAccessException("Only an admin can create another admin user.");
-        }
-
-        // Create user
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            Username = dto.Username,
-            UserTypeId = userTypeId,
-            ContactInfoId = contactInfo.Id
-        };
-        await _context.Users.AddAsync(user);
-
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        return user.Id;
-    }
-    catch (Exception ex)
-    {
-        await transaction.RollbackAsync();
-        throw new InvalidOperationException("Failed to create user: " + ex.Message, ex);
-    }
-}
 
 
 
@@ -172,7 +172,7 @@ namespace Accounts.API.Services
         {
             string username = Environment.GetEnvironmentVariable("ADMIN_USERNAME");
             string password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
-            
+
 
             // Check if the user is admin
             bool isAdmin = token != null && await IsUserAdminAsync(token);
@@ -207,7 +207,7 @@ namespace Accounts.API.Services
                 await CreateUserAsync(adminUserRequest, allowAdminCreation: true, isAdmin);
             }
         }
-        
+
         private async Task<bool> IsUserAdminAsync(string token)
         {
             if (SessionStore == null)
