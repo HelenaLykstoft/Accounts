@@ -1,5 +1,8 @@
-﻿public class LoginResponse
+﻿namespace Accounts.Core.Entities
 {
-    public string Token { get; set; }
-    public DateTime Expiry { get; set; }
+    public class LoginResponse
+    {
+        public string Token { get; set; }
+        public DateTime Expiry { get; set; }
+    }
 }

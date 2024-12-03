@@ -1,8 +1,8 @@
 ﻿namespace Accounts.Core.Entities
 {
-    public class MeResponse
+    public class Session
     {
         public Guid UserId { get; set; }
-        public string Token { get; set; }
+        public DateTime Expiry { get; set; }
     }
 }
