@@ -152,7 +152,7 @@ namespace Accounts.Tests
             Assert.NotEqual(Guid.Empty, createResult.UserId); 
 
             // Act: Attempt to log in with the created credentials
-            var loginRequest = new LoginRequest
+            var loginRequest = new LoginCommand
             {
                 Username = registerUser.Username,
                 Password = registerUser.Password
@@ -198,7 +198,7 @@ namespace Accounts.Tests
         public async Task Login_ReturnsUnauthorized_WhenInvalidCredentials()
         {
             // Arrange
-            var loginRequest = new LoginRequest
+            var loginRequest = new LoginCommand
             {
                 Username = "invalid.user",
                 Password = "WrongPassword"
@@ -276,7 +276,7 @@ namespace Accounts.Tests
                 LoginInformation = new LoginInformation { Password = "hashedPassword" }
             });
 
-            var loginRequest = new LoginRequest
+            var loginRequest = new LoginCommand
             {
                 Username = registerUser.Username,
                 Password = registerUser.Password

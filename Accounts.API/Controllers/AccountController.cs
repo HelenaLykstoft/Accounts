@@ -39,7 +39,7 @@ namespace Accounts.API.Controllers
         }
         
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+        public async Task<IActionResult> Login([FromBody] LoginCommand loginRequest)
         {
             var user = await _accountService.ValidateUserAsync(loginRequest.Username, loginRequest.Password);
             var activeSession = _sessionStore.GetAllSessions()

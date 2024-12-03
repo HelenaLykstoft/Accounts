@@ -1,5 +1,3 @@
-using Accounts.API.Kafka;
-using Accounts.Infrastructure.Kafka;
 using Accounts.Infrastructure.Persistence;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -49,11 +47,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
-// Add the producer service as singletons:
-builder.Services.AddSingleton<KafkaProducer>();
-// Add the kafka consumer service as a hosted service (background service that runs for the lifetime of the application):
-builder.Services.AddHostedService<KafkaConsumer>();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 
