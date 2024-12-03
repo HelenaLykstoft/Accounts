@@ -16,6 +16,7 @@ namespace Accounts.Infrastructure.Repositories
         public async Task AddLoginInfoAsync(LoginInformation loginInfo)
         {
             await _context.LoginInformations.AddAsync(loginInfo);
+            await _context.SaveChangesAsync();
         }
     }
 }

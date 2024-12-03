@@ -15,6 +15,7 @@ namespace Accounts.Infrastructure.Repositories
         public async Task AddContactInfoAsync(ContactInfo contactInfo)
         {
             await _context.ContactInfos.AddAsync(contactInfo);
+            await _context.SaveChangesAsync();
         }
     }
 }

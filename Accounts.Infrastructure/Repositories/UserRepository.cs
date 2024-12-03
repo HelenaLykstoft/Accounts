@@ -30,11 +30,6 @@ namespace Accounts.Infrastructure.Repositories
 
         public async Task AddUserAsync(User user)
         {
-            if (user.ContactInfo == null || user.UserType == null)
-            {
-                throw new ArgumentException("User must have valid ContactInfo and UserType.");
-            }
-
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
         }

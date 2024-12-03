@@ -12,7 +12,7 @@ namespace Accounts.Core.Ports.Driving
         /// <param name="allowAdminCreation">Whether admin creation is allowed.</param>
         /// <param name="isAdmin">Indicates if the caller is an admin.</param>
         /// <returns>The ID of the newly created user.</returns>
-        Task<Guid> CreateUserAsync(CreateUserCommand dto, bool allowAdminCreation = false, bool isAdmin = false);
+        Task<Guid> CreateUserAsync(RegisterUserCommand dto, bool allowAdminCreation = false, bool isAdmin = false);
 
         /// <summary>
         /// Validates a user's credentials.

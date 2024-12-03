@@ -14,7 +14,7 @@ namespace Accounts.Core.Services
         private readonly IContactInfoRepository _contactInfoRepository;
         private readonly ILoginInfoRepository _loginInfoRepository;
         private readonly ITransactionHandler _transactionHandler;
-        private readonly IValidator<CreateUserCommand> _validator;
+        private readonly IValidator<RegisterUserCommand> _validator;
         private readonly IPasswordHasher _passwordHasher;
         private readonly ISessionStore _sessionStore;
 
@@ -25,7 +25,7 @@ namespace Accounts.Core.Services
             IContactInfoRepository contactInfoRepository,
             ILoginInfoRepository loginInfoRepository,
             ITransactionHandler transactionHandler,
-            IValidator<CreateUserCommand> validator,
+            IValidator<RegisterUserCommand> validator,
             IPasswordHasher passwordHasher,
             ISessionStore sessionStore)
         {
@@ -40,7 +40,7 @@ namespace Accounts.Core.Services
             _sessionStore = sessionStore ?? throw new ArgumentNullException(nameof(sessionStore));
         }
 
-        public async Task<Guid> CreateUserAsync(CreateUserCommand dto, bool allowAdminCreation = false, bool isAdmin = false)
+        public async Task<Guid> CreateUserAsync(RegisterUserCommand dto, bool allowAdminCreation = false, bool isAdmin = false)
         {
             // Validation
             var validationResult = await _validator.ValidateAsync(dto);
@@ -154,7 +154,7 @@ namespace Accounts.Core.Services
                 throw new UnauthorizedAccessException("Only admins can perform this action.");
             }
 
-            var adminUserRequest = new CreateUserCommand
+            var adminUserRequest = new RegisterUserCommand
             {
                 FirstName = "Main",
                 LastName = "Admin",

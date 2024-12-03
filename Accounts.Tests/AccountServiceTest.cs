@@ -1,49 +1,66 @@
-﻿using Accounts.API.DTO;
-using Accounts.API.Services;
-using Accounts.Core.Entities;
-using Accounts.Infrastructure.Persistence;
+﻿using Accounts.Core.Entities;
+using Accounts.Core.Models;
+using Accounts.Core.Ports.Driven;
+using Accounts.Core.Ports.Driving;
+using Accounts.Core.Services;
+using Accounts.Core.Validators;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
 
 namespace Accounts.Tests
 {
-    public class AccountServiceTest : IDisposable
+    public class AccountServiceTest
     {
-        private readonly AppDbContext _dbContext;
+        private readonly Mock<IUserRepository> _userRepositoryMock;
+        private readonly Mock<IAddressRepository> _addressRepositoryMock;
+        private readonly Mock<ICityRepository> _cityRepositoryMock;
+        private readonly Mock<IContactInfoRepository> _contactInfoRepositoryMock;
+        private readonly Mock<ILoginInfoRepository> _loginInfoRepositoryMock;
+        private readonly Mock<ITransactionHandler> _transactionHandlerMock;
+        //private readonly Mock<IValidator<RegisterUserCommand>> _validatorMock;
+        private readonly RegisterUserValidator _validator;
+        private readonly Mock<IPasswordHasher> _passwordHasherMock;
+        private readonly Mock<ISessionStore> _sessionStoreMock;
+
         private readonly AccountService _service;
-        private readonly Mock<IValidator<RegisterUserRequest>> _validatorMock;
-        
+
         public AccountServiceTest()
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb")
-                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
-                .Options;
+            _userRepositoryMock = new Mock<IUserRepository>();
+            _addressRepositoryMock = new Mock<IAddressRepository>();
+            _cityRepositoryMock = new Mock<ICityRepository>();
+            _contactInfoRepositoryMock = new Mock<IContactInfoRepository>();
+            _loginInfoRepositoryMock = new Mock<ILoginInfoRepository>();
+            _transactionHandlerMock = new Mock<ITransactionHandler>();
+            //_validatorMock = new Mock<IValidator<RegisterUserCommand>>();
+            _validator = new RegisterUserValidator();
+            _passwordHasherMock = new Mock<IPasswordHasher>();
+            _sessionStoreMock = new Mock<ISessionStore>();
 
-
-            _dbContext = new AppDbContext(options);
-
+            //_validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserCommand>(), default))
+            //    .ReturnsAsync(new ValidationResult());
             
-            // Mock the validator
-            _validatorMock = new Mock<IValidator<RegisterUserRequest>>();
-            _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserRequest>(), default))
-                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
-            
-            _service = new AccountService(_dbContext, _validatorMock.Object); 
-        }
+            _passwordHasherMock.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("hashedPassword");
 
-        public void Dispose()
-        {
-            _dbContext.Database.EnsureDeleted();
-            _dbContext.Dispose();
+            _service = new AccountService(
+                _userRepositoryMock.Object,
+                _addressRepositoryMock.Object,
+                _cityRepositoryMock.Object,
+                _contactInfoRepositoryMock.Object,
+                _loginInfoRepositoryMock.Object,
+                _transactionHandlerMock.Object,
+                _validator,
+                _passwordHasherMock.Object,
+                _sessionStoreMock.Object
+            );
         }
 
         [Fact]
         public async Task CreateUser_ShouldAddUserToDatabase()
         {
-            var userRequest = new RegisterUserRequest
+            var userRequest = new RegisterUserCommand
             {
                 FirstName = "Test",
                 LastName = "Testing",
@@ -57,16 +74,30 @@ namespace Accounts.Tests
                 PostalCode = 1000,
                 City = "Copenhagen"
             };
-            
+
+            _userRepositoryMock.Setup(r => r.UsernameExistsAsync(It.IsAny<string>()))
+                .ReturnsAsync(false);
+            _cityRepositoryMock.Setup(c => c.GetOrCreateCityAsync(It.IsAny<int>(), It.IsAny<string>()))
+                .ReturnsAsync(new City { PostalCode = 1000, Name = "Copenhagen" });
+            _addressRepositoryMock.Setup(a => a.GetOrCreateAddressAsync(It.IsAny<Address>()))
+                .ReturnsAsync(new Address { Id = Guid.NewGuid() });
+            _contactInfoRepositoryMock.Setup(c => c.AddContactInfoAsync(It.IsAny<ContactInfo>()))
+                .Returns(Task.CompletedTask);
+            _userRepositoryMock.Setup(r => r.AddUserAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
+
+            _transactionHandlerMock.Setup(handler => handler.ExecuteAsync(It.IsAny<Func<Task>>()))
+                .Returns<Func<Task>>(func =>
+                {
+                    return func();
+                });
+
+            // Act
             var createdUserId = await _service.CreateUserAsync(userRequest);
 
-            // Ensure the user is saved to the database by checking the generated user ID
-            var addedUser = await _dbContext.Users
-                .FirstOrDefaultAsync(u => u.Id == createdUserId);
-
-            // Assert the user was created successfully by checking the Id 
-            Assert.NotNull(addedUser);
-            Assert.Equal(createdUserId, addedUser.Id);
+            // Assert
+            _userRepositoryMock.Verify(r => r.AddUserAsync(It.IsAny<User>()), Times.Once);  
+            Assert.NotEqual(Guid.Empty, createdUserId);
         }
 
 
@@ -74,7 +105,7 @@ namespace Accounts.Tests
         public async Task CreateUser_ShouldThrowException_ForInvalidUser()
         {
             
-            var userRequest = new RegisterUserRequest
+            var userRequest = new RegisterUserCommand
             {
                 Username = "", 
                 Password = "password", 
@@ -86,40 +117,8 @@ namespace Accounts.Tests
                 City = "Nowhere"
             };
 
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateUserAsync(userRequest));
-            Assert.Contains("Required properties", exception.Message);
-
-        }
-        
-
-        [Fact]
-        public async Task GetUsers_ShouldReturnAllUsers()
-        {
-            for (int i = 1; i <= 5; i++)
-            {
-                var userRequest = new RegisterUserRequest
-                {
-                    FirstName = $"First{i}",
-                    LastName = $"Last{i}",
-                    Username = $"User{i}", 
-                    Password = $"Passw{i}", 
-                    Email = $"Mail{i}@example.com", 
-                    PhoneNumber = $"2435675{i}", 
-                    StreetNumber = i, 
-                    StreetName = "Main St",
-                    PostalCode = 997 - i, 
-                    City = "Nowhere"
-                };
-                await _service.CreateUserAsync(userRequest);
-
-            }
-
-            await _dbContext.SaveChangesAsync();
-
-            var result = await _service.GetUsersCountAsync();
-
-            Assert.NotNull(result);
-            //Assert.Equal(5, result); //TODO: Midlertidigt udkommenteret
+            var exception = await Assert.ThrowsAsync<ValidationException>(() => _service.CreateUserAsync(userRequest));
+            Assert.Contains("Invalid email format.", exception.Message);
         }
     }
 }

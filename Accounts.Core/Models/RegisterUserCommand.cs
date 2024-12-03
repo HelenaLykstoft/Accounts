@@ -1,6 +1,6 @@
 ﻿namespace Accounts.Core.Models
 {
-    public class CreateUserCommand
+    public class RegisterUserCommand
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

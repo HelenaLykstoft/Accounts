@@ -28,6 +28,7 @@ namespace Accounts.Infrastructure.Repositories
             }
 
             await _context.Addresses.AddAsync(address);
+            await _context.SaveChangesAsync();
             return address;
         }
     }

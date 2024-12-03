@@ -28,6 +28,7 @@ namespace Accounts.Infrastructure.Repositories
                 Name = cityName
             };
             await _context.Cities.AddAsync(city);
+            await _context.SaveChangesAsync();
             return city;
         }
     }

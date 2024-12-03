@@ -3,9 +3,9 @@ using Accounts.Core.Models;
 
 namespace Accounts.Core.Validators
 {
-    public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+    public class RegisterUserValidator : AbstractValidator<RegisterUserCommand>
     {
-        public CreateUserCommandValidator()
+        public RegisterUserValidator()
         {
             // Username validation
             RuleFor(dto => dto.Username)
