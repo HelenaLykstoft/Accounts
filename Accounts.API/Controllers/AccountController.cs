@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Accounts.API.DTO;
-using Accounts.API.Services;
+using Accounts.Core.Ports.Driven;
+using Accounts.Core.Entities;
+using Accounts.Core.Models;
+using Accounts.Core.Ports.Driving;
 
 namespace Accounts.API.Controllers
 {
@@ -8,10 +11,10 @@ namespace Accounts.API.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly AccountService _accountService;
-        private readonly SessionStore _sessionStore;
+        private readonly IAccountService _accountService;
+        private readonly ISessionStore _sessionStore;
 
-        public AccountController(AccountService accountService, SessionStore  sessionStore)
+        public AccountController(IAccountService accountService, ISessionStore  sessionStore)
         {
             _accountService = accountService;
             _sessionStore = sessionStore;
@@ -23,7 +26,7 @@ namespace Accounts.API.Controllers
         }
         
         [HttpPost("create")]
-        public async Task<IActionResult> CreateUser([FromBody] RegisterUserRequest registerUser)
+        public async Task<IActionResult> CreateUser([FromBody] RegisterUserCommand registerUser)
         {
             if (!ModelState.IsValid)
             {
@@ -36,7 +39,7 @@ namespace Accounts.API.Controllers
         }
         
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+        public async Task<IActionResult> Login([FromBody] LoginCommand loginRequest)
         {
             var user = await _accountService.ValidateUserAsync(loginRequest.Username, loginRequest.Password);
             var activeSession = _sessionStore.GetAllSessions()

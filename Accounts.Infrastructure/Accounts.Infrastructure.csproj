@@ -24,11 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Repositories\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Accounts.Domain\Accounts.Domain.csproj" />
+    <ProjectReference Include="..\Accounts.Core\Accounts.Core.csproj" />
   </ItemGroup>
 
 </Project>

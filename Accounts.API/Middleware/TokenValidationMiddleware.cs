@@ -1,9 +1,11 @@
-﻿public class TokenValidationMiddleware
+﻿using Accounts.Core.Ports.Driven;
+
+public class TokenValidationMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly SessionStore _sessionStore;
+    private readonly ISessionStore _sessionStore;
 
-    public TokenValidationMiddleware(RequestDelegate next, SessionStore sessionStore)
+    public TokenValidationMiddleware(RequestDelegate next, ISessionStore sessionStore)
     {
         _next = next;
         _sessionStore = sessionStore;

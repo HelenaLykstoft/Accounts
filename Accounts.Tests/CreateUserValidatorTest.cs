@@ -1,5 +1,5 @@
-﻿using Accounts.API.DTO;
-using Accounts.API.Services;
+﻿using Accounts.Core.Models;
+using Accounts.Core.Validators;
 
 namespace Accounts.UnitTests
 {
@@ -16,7 +16,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Username_ShouldBeValid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 Username = "Johncena1" // Valid username
             };
@@ -28,7 +28,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Username_ShouldBeInvalid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 Username = "jo" // Invalid: too short
             };
@@ -41,7 +41,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Password_ShouldBeValid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 Password = "Valid1Password@" // Valid password
             };
@@ -53,7 +53,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Password_ShouldBeInvalid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 Password = "password" // Invalid: missing uppercase, number, symbol
             };
@@ -66,7 +66,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Email_ShouldBeValid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 Email = "valid.email@example.com" // Valid email
                 
@@ -79,7 +79,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Email_ShouldBeInvalid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 Email = "valid.email@example" // Invalid email
                 
@@ -93,7 +93,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void PhoneNumber_ShouldBeValid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 PhoneNumber =  "+4511111111" // Valid Danish phone number
             };
@@ -105,7 +105,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void PhoneNumber_ShouldBeInvalid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 PhoneNumber = "12345" // Invalid phone number format
             };
@@ -118,7 +118,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Address_ShouldBeValid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                         StreetNumber = 1,
                         StreetName = "Main St",
@@ -132,7 +132,7 @@ namespace Accounts.UnitTests
         [Fact]
         public void Address_ShouldBeInvalid()
         {
-            var user = new RegisterUserRequest
+            var user = new RegisterUserCommand
             {
                 StreetNumber = -2,
                 StreetName = "Main St",

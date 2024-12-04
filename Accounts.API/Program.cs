@@ -1,14 +1,15 @@
-using Accounts.API.DTO;
-using Accounts.API.Kafka;
-using Accounts.API.Services;
-using Accounts.Infrastructure.Kafka;
 using Accounts.Infrastructure.Persistence;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using DotNetEnv;
+using Accounts.Core.Ports.Driven;
+using Accounts.Infrastructure.Repositories;
+using Accounts.Core.Models;
+using Accounts.Core.Validators;
+using Accounts.Core.Services;
+using Accounts.Core.Ports.Driving;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,21 +48,22 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add the producer service as singletons:
-builder.Services.AddSingleton<KafkaProducer>();
-// Add the kafka consumer service as a hosted service (background service that runs for the lifetime of the application):
-builder.Services.AddHostedService<KafkaConsumer>();
-builder.Services.AddSingleton<TestService>();
-builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
-// Session singleton
-builder.Services.AddSingleton<SessionStore>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+builder.Services.AddScoped<ICityRepository, CityRepository>();
+builder.Services.AddScoped<IContactInfoRepository, ContactInfoRepository>();
+builder.Services.AddScoped<ILoginInfoRepository, LoginInfoRepository>();
+
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+builder.Services.AddSingleton<ISessionStore, SessionStore>();
+builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
 
 // Validation
-services.AddFluentValidationAutoValidation();
-services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
-services.AddTransient<IValidator<RegisterUserRequest>, RegisterUserValidator>();
-
+services.AddFluentValidationAutoValidation(); 
+services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>(); 
+services.AddTransient<IValidator<RegisterUserCommand>, RegisterUserValidator>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -73,7 +75,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.AddDefaultUserTypesAsync();
-    var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
+    var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
     await accountService.SeedAdminUserAsync();
 }
 

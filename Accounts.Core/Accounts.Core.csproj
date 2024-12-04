@@ -1,24 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="2.6.0" />
-    <PackageReference Include="DotNetEnv" Version="3.1.1" />
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="7.1.0" />
+    <Compile Remove="Aggregates\**" />
+    <Compile Remove="Exceptions\**" />
+    <EmbeddedResource Remove="Aggregates\**" />
+    <EmbeddedResource Remove="Exceptions\**" />
+    <None Remove="Aggregates\**" />
+    <None Remove="Exceptions\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Accounts.Core\Accounts.Core.csproj" />
-    <ProjectReference Include="..\Accounts.Infrastructure\Accounts.Infrastructure.csproj" />
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="7.1.0" />
   </ItemGroup>
 
 </Project>
