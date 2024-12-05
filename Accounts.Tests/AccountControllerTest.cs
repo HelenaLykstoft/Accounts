@@ -3,6 +3,7 @@ using Accounts.API.DTO;
 using Accounts.Core.Entities;
 using Accounts.Core.Models;
 using Accounts.Core.Ports.Driven;
+using Accounts.Core.Ports.Driving;
 using Accounts.Core.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
@@ -109,7 +110,7 @@ namespace Accounts.Tests
             //Assert
             var okResult = Assert.IsType<OkObjectResult>(response);
             var result = Assert.IsType<AccountController.CreateUserResponse>(okResult.Value);
-            Assert.NotEqual(Guid.Empty, result.UserId); 
+            Assert.NotEqual(Guid.Empty, result.UserId);
         }
 
         [Fact]
@@ -149,7 +150,7 @@ namespace Accounts.Tests
             var createResponse = await _controller.CreateUser(registerUser);
             var createOkResult = Assert.IsType<OkObjectResult>(createResponse);
             var createResult = Assert.IsType<AccountController.CreateUserResponse>(createOkResult.Value);
-            Assert.NotEqual(Guid.Empty, createResult.UserId); 
+            Assert.NotEqual(Guid.Empty, createResult.UserId);
 
             // Act: Attempt to log in with the created credentials
             var loginRequest = new LoginCommand
@@ -212,27 +213,25 @@ namespace Accounts.Tests
         }
 
         [Fact]
-        public async Task Logout_RemovesSession_WhenValidToken()
+        public void Logout_RemovesSession_WhenValidToken()
         {
             // Arrange
-            var token = "test-token";
-            var userId = Guid.NewGuid();
-            var expiry = DateTime.UtcNow.AddHours(1);
-
-            _sessionStoreMock.Object.AddSession(token, userId, expiry);
+            var token = "valid-token";
+            _sessionStoreMock.Setup(s => s.RemoveSession(token)).Returns(true);
 
             // Act
-            var response = _controller.Logout(token);
+            var result = _controller.Logout("Bearer " + token);
 
             // Assert
-            Assert.IsType<OkObjectResult>(response);
-            Assert.False(_sessionStoreMock.Object.TryGetSession(token, out _));
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal("Logged out successfully.", okResult.Value);
         }
 
+
         [Fact]
-        public async Task Me_ReturnsUserIdAndToken_WhenValidToken()
+        public async Task Me_ReturnsUserIdUsernameAndToken_WhenValidToken()
         {
-            // Arrange
+            // Arrange: Register a new user
             var registerUser = new RegisterUserCommand()
             {
                 FirstName = "John",
@@ -248,20 +247,20 @@ namespace Accounts.Tests
                 Password = "ValidPassword123!"
             };
 
-            _userRepositoryMock.Setup(r => r.UsernameExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
+            // Mock the user creation process and related services
+            _userRepositoryMock.Setup(r => r.UsernameExistsAsync(It.IsAny<string>())).ReturnsAsync(false);
             _cityRepositoryMock.Setup(c => c.GetOrCreateCityAsync(It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(new City { PostalCode = 1000, Name = "Copenhagen" });
             _addressRepositoryMock.Setup(a => a.GetOrCreateAddressAsync(It.IsAny<Address>()))
                 .ReturnsAsync(new Address { Id = Guid.NewGuid() });
             _contactInfoRepositoryMock.Setup(c => c.AddContactInfoAsync(It.IsAny<ContactInfo>()))
                 .Returns(Task.CompletedTask);
-            _userRepositoryMock.Setup(r => r.AddUserAsync(It.IsAny<User>()))
-                .Returns(Task.CompletedTask);
+            _userRepositoryMock.Setup(r => r.AddUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
             _transactionHandlerMock.Setup(handler => handler.ExecuteAsync(It.IsAny<Func<Task>>()))
-                .Returns<Func<Task>>(func => { return func(); });
+                .Returns<Func<Task>>(func => func());
 
+            // Call CreateUser API and get the UserId
             var createResponse = await _controller.CreateUser(registerUser);
             var createOkResult = Assert.IsType<OkObjectResult>(createResponse);
             var createResult = Assert.IsType<AccountController.CreateUserResponse>(createOkResult.Value);
@@ -286,8 +285,6 @@ namespace Accounts.Tests
 
             // Assert the response is of type OkObjectResult
             var loginOkResult = Assert.IsType<OkObjectResult>(loginResponse);
-
-            // Cast the response to LoginResponse
             var loginResult = Assert.IsType<LoginResponse>(loginOkResult.Value);
 
             // Validates token and expiry
@@ -301,26 +298,36 @@ namespace Accounts.Tests
                 Expiry = DateTime.UtcNow.AddHours(1)
             };
 
-            // Mock the session store to return the session when TryGetSession is called
-            _sessionStoreMock.Setup(s => s.TryGetSession(token, out session)).Returns(true);
+            // Mock the session store to return the session when GetAllSessions is called
+            _sessionStoreMock.Setup(s => s.GetAllSessions())
+                .Returns(new List<Session> { session }); // Mock that the session exists
 
-            // Ensure session is stored properly using TryGetSession
-            var sessionExists = _sessionStoreMock.Object.TryGetSession(loginResult.Token, out var sessionResult);
-            Assert.True(sessionExists); // Check if the session exists
-            Assert.NotNull(sessionResult); // Ensure the session is not null
-            Assert.Equal(createResult.UserId, sessionResult.UserId); // Verify the UserId matches
-            Assert.True(sessionResult.Expiry > DateTime.UtcNow); // Ensure the session expiry is in the future
+            // Ensure that the session is being stored properly
+            var allSessions = _sessionStoreMock.Object.GetAllSessions();
+            Assert.Contains(allSessions,
+                s => s.UserId == createResult.UserId); // Check if the session for this user exists
+            Assert.True(session.Expiry > DateTime.UtcNow); // Ensure the session is valid (not expired)
 
+            // Simulate the token validation middleware setting the UserId and Token in the HttpContext
             _controller.ControllerContext.HttpContext.Items["UserId"] = createResult.UserId;
             _controller.ControllerContext.HttpContext.Items["Token"] = loginResult.Token;
 
-            var meResponse = _controller.Me();
+            // **Mock the AccountService to return the correct username for the user**
+            // Here we mock GetUsernameByIdAsync to return the correct username
+            _userRepositoryMock.Setup(r => r.GetUserByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new User { Username = registerUser.Username });
+
+            // Act: Call the Me endpoint
+            var meResponse = await _controller.Me();
+
+            // Assert: Ensure the response is OkObjectResult
             var meOkResult = Assert.IsType<OkObjectResult>(meResponse);
             var meResult = Assert.IsType<MeResponse>(meOkResult.Value);
 
-            // Assert
+            // Assert the values returned in the MeResponse
             Assert.Equal(createResult.UserId, meResult.UserId);
             Assert.Equal(loginResult.Token, meResult.Token);
+            Assert.Equal(registerUser.Username, meResult.Username); // Check that Username is returned
         }
 
 
@@ -331,7 +338,7 @@ namespace Accounts.Tests
             _controller.ControllerContext.HttpContext = new DefaultHttpContext();
 
             // Act
-            var response = _controller.Me();
+            var response = await _controller.Me();
 
             // Assert
             Assert.IsType<UnauthorizedObjectResult>(response);

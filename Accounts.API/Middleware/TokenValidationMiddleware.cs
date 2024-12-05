@@ -25,12 +25,19 @@ public class TokenValidationMiddleware
         }
 
         // Validate the Authorization header for other requests
-        if (context.Request.Headers.TryGetValue("Authorization", out var token))
+        if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
         {
+            var token = authHeader.ToString();
+
+            // Check if the header starts with "Bearer "
+            if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                token = token.Substring("Bearer ".Length).Trim();
+            }
+
+            // Validate the token
             if (_sessionStore.TryGetSession(token, out var session) && session.Expiry >= DateTime.UtcNow)
             {
-
-                // Store user ID and token for further use
                 context.Items["UserId"] = session.UserId;
                 context.Items["Token"] = token; // Store the token for further use
             }
@@ -47,6 +54,7 @@ public class TokenValidationMiddleware
             await context.Response.WriteAsync("Authorization header is required.");
             return;
         }
+
 
         await _next(context); // Continue processing the request
     }

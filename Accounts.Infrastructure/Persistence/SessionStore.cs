@@ -36,8 +36,10 @@ namespace Accounts.Infrastructure.Persistence
 
         public virtual bool RemoveSession(string token)
         {
+            if (string.IsNullOrEmpty(token)) return false;
             return _sessions.Remove(token);
         }
+
 
         public virtual IEnumerable<Session> GetAllSessions()
         {

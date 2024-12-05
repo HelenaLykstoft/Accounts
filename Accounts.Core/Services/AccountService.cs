@@ -2,6 +2,7 @@
 using Accounts.Core.Models;
 using Accounts.Core.Ports.Driven;
 using Accounts.Core.Ports.Driving;
+using DotNetEnv;
 using FluentValidation;
 
 namespace Accounts.Core.Services
@@ -134,6 +135,7 @@ namespace Accounts.Core.Services
 
         public async Task SeedAdminUserAsync(string? token = null)
         {
+            Env.Load("Accounts/.env");
             if (await _userRepository.AdminAccountExistsAsync())
             {
                 return; // Doesn't create seed admin if admin already exists
