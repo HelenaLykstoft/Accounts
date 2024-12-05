@@ -64,30 +64,54 @@ namespace Accounts.API.Controllers
         }
         
 
-        [HttpGet("logout")]
-        public IActionResult Logout([FromHeader(Name = "Authorization")] string token)
+        [HttpPost("logout")]
+        public IActionResult Logout([FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            _sessionStore.RemoveSession(token); // Use the correct method from SessionStore
+            if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+            {
+                return BadRequest("Invalid Authorization header format.");
+            }
+
+            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+
+            var removed = _sessionStore.RemoveSession(token);
+
+            if (!removed)
+            {
+                return NotFound("Session not found or already expired.");
+            }
+
             return Ok("Logged out successfully.");
         }
 
 
+
         [HttpGet("me")]
-        public IActionResult Me()
+        public async Task<IActionResult> Me()
         {
             if (HttpContext.Items.TryGetValue("UserId", out var userIdObj) &&
                 HttpContext.Items.TryGetValue("Token", out var tokenObj))
             {
                 var userId = (Guid)userIdObj;
                 var token = tokenObj.ToString();
-                
-                return Ok(new MeResponse { UserId = userId, Token = token });
 
+                // Fetch the username asynchronously using your existing method
+                var username = await _accountService.GetUsernameByIdAsync(userId);
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(new { message = "User is not logged in or session is invalid." });
+                }
+
+                return Ok(new MeResponse
+                {
+                    UserId = userId,
+                    Username = username,
+                    Token = token
+                });
             }
 
             return Unauthorized(new { message = "User is not logged in or session is invalid." });
         }
-
         }
     
 }
