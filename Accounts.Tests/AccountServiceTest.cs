@@ -1,12 +1,9 @@
 ﻿using Accounts.Core.Entities;
 using Accounts.Core.Models;
 using Accounts.Core.Ports.Driven;
-using Accounts.Core.Ports.Driving;
 using Accounts.Core.Services;
 using Accounts.Core.Validators;
 using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Accounts.Tests
@@ -17,12 +14,9 @@ namespace Accounts.Tests
         private readonly Mock<IAddressRepository> _addressRepositoryMock;
         private readonly Mock<ICityRepository> _cityRepositoryMock;
         private readonly Mock<IContactInfoRepository> _contactInfoRepositoryMock;
-        private readonly Mock<ILoginInfoRepository> _loginInfoRepositoryMock;
+
         private readonly Mock<ITransactionHandler> _transactionHandlerMock;
         //private readonly Mock<IValidator<RegisterUserCommand>> _validatorMock;
-        private readonly RegisterUserValidator _validator;
-        private readonly Mock<IPasswordHasher> _passwordHasherMock;
-        private readonly Mock<ISessionStore> _sessionStoreMock;
 
         private readonly AccountService _service;
 
@@ -32,28 +26,27 @@ namespace Accounts.Tests
             _addressRepositoryMock = new Mock<IAddressRepository>();
             _cityRepositoryMock = new Mock<ICityRepository>();
             _contactInfoRepositoryMock = new Mock<IContactInfoRepository>();
-            _loginInfoRepositoryMock = new Mock<ILoginInfoRepository>();
+            Mock<ILoginInfoRepository> loginInfoRepositoryMock = new();
             _transactionHandlerMock = new Mock<ITransactionHandler>();
             //_validatorMock = new Mock<IValidator<RegisterUserCommand>>();
-            _validator = new RegisterUserValidator();
-            _passwordHasherMock = new Mock<IPasswordHasher>();
-            _sessionStoreMock = new Mock<ISessionStore>();
+            var validator = new RegisterUserValidator();
+            Mock<IPasswordHasher> passwordHasherMock = new();
+            Mock<ISessionStore> sessionStoreMock = new();
 
             //_validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserCommand>(), default))
             //    .ReturnsAsync(new ValidationResult());
-            
-            _passwordHasherMock.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("hashedPassword");
+            passwordHasherMock.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("hashedPassword");
 
             _service = new AccountService(
                 _userRepositoryMock.Object,
                 _addressRepositoryMock.Object,
                 _cityRepositoryMock.Object,
                 _contactInfoRepositoryMock.Object,
-                _loginInfoRepositoryMock.Object,
+                loginInfoRepositoryMock.Object,
                 _transactionHandlerMock.Object,
-                _validator,
-                _passwordHasherMock.Object,
-                _sessionStoreMock.Object
+                validator,
+                passwordHasherMock.Object,
+                sessionStoreMock.Object
             );
         }
 

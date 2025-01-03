@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Accounts.Infrastructure.Persistence;
-using Xunit;
-using System;
-using System.Threading.Tasks;
 using Accounts.Core.Entities;
 using Accounts.Core.Models;
 
@@ -130,7 +127,8 @@ namespace Accounts.Tests
             await _context.SaveChangesAsync();
 
             // Assert - Verify that the user was created correctly
-            var addedUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == registerUserCommand.Username);
+            var addedUser = await _context.Users.Include(user => user.ContactInfo)
+                .ThenInclude(contactInfo => contactInfo.Address).ThenInclude(address => address.City).FirstOrDefaultAsync(u => u.Username == registerUserCommand.Username);
             Assert.NotNull(addedUser);
             Assert.Equal(registerUserCommand.FirstName, addedUser.FirstName);
             Assert.Equal(registerUserCommand.LastName, addedUser.LastName);
