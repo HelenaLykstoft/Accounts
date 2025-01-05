@@ -1,9 +1,7 @@
 ﻿using Accounts.API.Controllers;
-using Accounts.API.DTO;
 using Accounts.Core.Entities;
 using Accounts.Core.Models;
 using Accounts.Core.Ports.Driven;
-using Accounts.Core.Ports.Driving;
 using Accounts.Core.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
@@ -20,13 +18,9 @@ namespace Accounts.Tests
         private readonly Mock<IAddressRepository> _addressRepositoryMock;
         private readonly Mock<ICityRepository> _cityRepositoryMock;
         private readonly Mock<IContactInfoRepository> _contactInfoRepositoryMock;
-        private readonly Mock<ILoginInfoRepository> _loginInfoRepositoryMock;
         private readonly Mock<ITransactionHandler> _transactionHandlerMock;
-        private readonly Mock<IValidator<RegisterUserCommand>> _validatorMock;
         private readonly Mock<IPasswordHasher> _passwordHasherMock;
         private readonly Mock<ISessionStore> _sessionStoreMock;
-
-        private readonly AccountService _service;
 
         public AccountControllerTests()
         {
@@ -34,29 +28,29 @@ namespace Accounts.Tests
             _addressRepositoryMock = new Mock<IAddressRepository>();
             _cityRepositoryMock = new Mock<ICityRepository>();
             _contactInfoRepositoryMock = new Mock<IContactInfoRepository>();
-            _loginInfoRepositoryMock = new Mock<ILoginInfoRepository>();
+            Mock<ILoginInfoRepository> loginInfoRepositoryMock = new();
             _transactionHandlerMock = new Mock<ITransactionHandler>();
             _passwordHasherMock = new Mock<IPasswordHasher>();
             _sessionStoreMock = new Mock<ISessionStore>();
 
-            _validatorMock = new Mock<IValidator<RegisterUserCommand>>();
-            _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserCommand>(), default))
+            Mock<IValidator<RegisterUserCommand>> validatorMock = new();
+            validatorMock.Setup(v => v.ValidateAsync(It.IsAny<RegisterUserCommand>(), default))
                 .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             // Create the AccountService with mocked dependencies
-            _service = new AccountService(
+            var service = new AccountService(
                 _userRepositoryMock.Object,
                 _addressRepositoryMock.Object,
                 _cityRepositoryMock.Object,
                 _contactInfoRepositoryMock.Object,
-                _loginInfoRepositoryMock.Object,
+                loginInfoRepositoryMock.Object,
                 _transactionHandlerMock.Object,
-                _validatorMock.Object,
+                validatorMock.Object,
                 _passwordHasherMock.Object,
                 _sessionStoreMock.Object
             );
 
-            _controller = new AccountController(_service, _sessionStoreMock.Object);
+            _controller = new AccountController(service, _sessionStoreMock.Object);
 
             // Mock HttpContext and ControllerContext
             var httpContextMock = new Mock<HttpContext>();
